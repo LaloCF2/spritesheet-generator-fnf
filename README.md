@@ -5,7 +5,7 @@
 Esta aplicación funciona al 100% del lado del cliente.
 
 ## 🚀 En Vivo
-👉 **[¡Prueba usando la web!]([https://TU_USUARIO.github.io/TU_REPOSITORIO/](https://lalocf2.github.io/spritesheet-generator-fnf/))**
+👉 **[¡Prueba usando la web!]([(https://lalocf2.github.io/spritesheet-generator-fnf/)])**
 
 ---
 
