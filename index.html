@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spritesheet Generator FNF</title>
+    
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="app-header">
+        <h1 class="app-title">
+            <img src="https://cdn-icons-png.flaticon.com/128/17196/17196492.png" class="icon" style="filter: brightness(0) invert(1) drop-shadow(0 0 5px var(--accent)); width: 1.6rem; height: 1.6rem;" alt="Logo"> 
+            Spritesheet Generator FNF
+        </h1>
+        <div class="window-nav">
+            <button class="win-btn active" onclick="openWindow('win-home')" id="navHome"><img src="https://cdn-icons-png.flaticon.com/128/4675/4675164.png" class="icon" alt="Inicio"> Inicio</button>
+            <button class="win-btn" onclick="openWindow('win-escaner')" id="navEscaner" style="display:none;"><img src="https://cdn-icons-png.flaticon.com/128/10301/10301595.png" class="icon" alt="Escaner"> 1. Escáner</button>
+            <button class="win-btn" onclick="openWindow('win-orden')" id="navOrden" style="display:none;"><img src="https://cdn-icons-png.flaticon.com/128/4805/4805776.png" class="icon" alt="Secuenciador"> 2. Secuenciador</button>
+            <button class="win-btn" onclick="openWindow('win-afinador')" id="navAfinador" style="display:none;"><img src="https://cdn-icons-png.flaticon.com/512/126/126472.png" class="icon" alt="Afinador"> 3. Afinador</button>
+            <button class="win-btn psych-mode" onclick="openWindow('win-psych')" id="navPsych" style="display:none;"><img src="https://cdn-icons-png.flaticon.com/512/3135/3135692.png" class="icon" alt="Psych"> 4. Psych Live</button>
+            
+            <button class="win-btn btn-pack" onclick="repackAndExport()" id="navPack" style="display:none;" title="Desduplica y Empaqueta."><img src="https://cdn-icons-png.flaticon.com/512/1159/1159330.png" class="icon" alt="Pack"> Optimizar (PNG+XML)</button>
+            <button class="win-btn btn-export" onclick="exportarActual()" id="navExport" style="display:none;"><img src="https://cdn-icons-png.flaticon.com/512/2874/2874091.png" class="icon" id="iconExport" alt="Export"> Solo Guardar XML</button>
+        </div>
+    </div>
+
+    <div class="main-workspace">
+        
+        <div id="win-home" class="window-content active">
+            <h2 class="section-title" style="text-align: center; border:none; color: whitw; justify-content: center;">ENTORNO DE DESARROLLO</h2>
+            
+            <div class="home-grid">
+                <div class="home-card" onclick="initMode('SCAN')">
+                    <img src="https://cdn-icons-png.flaticon.com/128/2005/2005202.png" class="icon-lg" alt="Escaneo">
+                    <h3 class="home-title">Escanear de Cero</h3>
+                    <p class="home-desc">Esta opcion funciona importando una imagen con formato .png para escaneralo y generar un archivo xml para el personaje.</p>
+                    <div class="btn-pildora btn-secundario" style="width: 100%;">Modo Crear</div>
+                </div>
+                <div class="home-card">
+                    <img src="https://cdn-icons-png.flaticon.com/128/8021/8021621.png" class="icon-lg" alt="Optimizador">
+                    <h3 class="home-title">Optimizador</h3>
+                    <p class="home-desc">Esta opcion funciona subiendo un XML+PNG para modificar o corregir sprites del personaje o simplemente edita y exporta el XML sin tocar el PNG.</p>
+                    <div class="dual-upload">
+                        <input type="file" id="modImage" class="hidden-file" accept="image/png, image/jpeg">
+                        <button class="btn-pildora btn-secundario" onclick="document.getElementById('modImage').click();"><img src="https://cdn-icons-png.flaticon.com/512/716/716784.png" class="icon" alt="PNG"> Subir Imagen .PNG</button>
+                        
+                        <input type="file" id="modXML" class="hidden-file" accept=".xml">
+                        <button class="btn-pildora btn-secundario" style="border-color:#ffcc00; color:#ffcc00;" onclick="document.getElementById('modXML').click();"><img src="https://cdn-icons-png.flaticon.com/512/136/136443.png" class="icon" style="filter: brightness(0) saturate(100%) invert(85%) sepia(43%) saturate(1074%) hue-rotate(352deg) brightness(101%) contrast(104%);" alt="XML"> Subir Archivo .XML</button>
+                    </div>
+                </div>
+                <div class="home-card psych">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135692.png" class="icon-lg" style="filter: brightness(0) saturate(100%) invert(86%) sepia(85%) saturate(1637%) hue-rotate(34deg) brightness(108%) contrast(106%) drop-shadow(0 0 10px rgba(170,255,0,0.4));" alt="Psych">
+                    <h3 class="home-title" style="color:var(--accent-psych);">Psych Character Builder</h3>
+                    <p class="home-desc">Esta opcion sirve para visualizar y alinear animaciones en vivo para generar archivos .json sin necesidad de entrar al <b>Character Editor</b> de Psych Engine</p>
+                    <div class="dual-upload">
+                        <input type="file" id="psychImage" class="hidden-file" accept="image/png, image/jpeg">
+                        <button class="btn-pildora btn-secundario" onclick="document.getElementById('psychImage').click();"><img src="https://cdn-icons-png.flaticon.com/512/716/716784.png" class="icon" alt="PNG"> Subir Imagen .PNG</button>
+                        
+                        <input type="file" id="psychXML" class="hidden-file" accept=".xml">
+                        <button class="btn-pildora btn-secundario" style="border-color:var(--accent-psych); color:var(--accent-psych);" onclick="document.getElementById('psychXML').click();"><img src="https://cdn-icons-png.flaticon.com/512/136/136443.png" class="icon" style="filter: brightness(0) saturate(100%) invert(86%) sepia(85%) saturate(1637%) hue-rotate(34deg) brightness(108%) contrast(106%);" alt="XML"> Subir Archivo .XML</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="home-footer">
+                &copy; LaloCF 2026 | Versión 1.0
+            </div>
+
+        </div>
+
+        <div id="win-escaner" class="window-content">
+            <h2 class="section-title"><img src="https://cdn-icons-png.flaticon.com/128/9979/9979379.png" class="icon" style="filter: brightness(0) invert(24%) sepia(84%) saturate(7351%) hue-rotate(334deg) brightness(104%) contrast(108%);" alt="Escaner"> Laboratorio de Escaneo</h2>
+            
+            <div style="display:flex; width: 100%; gap:10px; margin-bottom: 10px;">
+                <input type="file" id="imageInputScan" class="hidden-file" accept="image/png">
+                <button class="btn-pildora btn-secundario" style="flex:1; padding: 15px; font-size: 1rem;" onclick="document.getElementById('imageInputScan').click();">
+                    <img src="https://cdn-icons-png.flaticon.com/512/716/716784.png" class="icon" alt="Upload"> 1. SELECCIONAR IMAGEN PNG
+                </button>
+            </div>
+            
+            <div class="tools-grid">
+                <div class="panel-rango"><label>Cortador de sombras (BETA): <span id="valCorte">20</span></label><input type="range" id="sliderCorte" min="5" max="250" value="20"></div>
+                <div class="panel-rango"><label>Magnetismo de Pixeles (BETA): <span id="valUnion">0</span>px</label><input type="range" id="sliderUnion" min="0" max="60" value="0"></div>
+            </div>
+            
+            <div style="display:flex; gap:10px;">
+                <button class="btn-pildora" id="btnProcesar" style="display:none; flex:2;"><span><img src="https://cdn-icons-png.flaticon.com/128/9979/9979466.png" class="icon" alt="Auto"> 2. Ejecutar Escaneo Automático</span></button>
+                <button class="btn-pildora btn-secundario" id="btnClearScan" style="flex:1; border-color:#990033; color:#ff4d88;" onclick="clearAllScan()"><img src="https://cdn-icons-png.flaticon.com/512/484/484611.png" class="icon" style="filter: brightness(0) saturate(100%) invert(32%) sepia(97%) saturate(2250%) hue-rotate(327deg) brightness(101%) contrast(106%);" alt="Limpiar"> Limpiar Todo</button>
+            </div>
+
+            <h3 style="color:white; font-size:0.9rem; margin: 10px 0 0 0; display:flex; align-items:center;"><img src="https://cdn-icons-png.flaticon.com/512/1041/1041985.png" class="icon" alt="Tools"> Herramientas de Edición</h3>
+            
+            <div class="mode-toggle-bar">
+                <button class="mode-btn active" id="btnNavegar" onclick="setGlobalMode('VIEW')"><img src="https://cdn-icons-png.flaticon.com/128/159/159604.png" class="icon icon-no-margin" style="margin-bottom:4px;" alt="Mover"> Modo Vista<br><small style="font-size:0.7rem;font-weight:normal;">1 dedo: Mover / 2 dedos: Zoom (+ -)</small></button>
+                <button class="mode-btn" id="btnEditar" onclick="setGlobalMode('EDIT')"><img src="https://cdn-icons-png.flaticon.com/512/1827/1827933.png" class="icon icon-no-margin" style="margin-bottom:4px;" alt="Editar"> Modo Editar<br><small style="font-size:0.7rem;font-weight:normal;">Bloquea la pantalla para Seleccionar, Dibujar o Ajustar.</small></button>
+            </div>
+
+            <div class="scan-manual-tools" id="manualToolsDiv" style="opacity: 0.5; pointer-events: none;">
+                <button class="tool-btn active" id="btnToolSelect" onclick="setScanTool('SELECT')"><img src="https://cdn-icons-png.flaticon.com/128/25/25643.png" class="icon" alt="Seleccionar"> Seleccionar</button>
+                <button class="tool-btn" id="btnToolDraw" onclick="setScanTool('DRAW')"><img src="https://cdn-icons-png.flaticon.com/128/13738/13738992.png" class="icon" alt="Dibujar"> Dibujar Caja</button>
+                <button class="tool-btn" id="btnToolSnap" onclick="autoFitSelected()" style="color: black; background: var(--accent-gold); border-color: white;"><img src="https://cdn-icons-png.flaticon.com/128/2040/2040504.png" class="icon icon-black" alt="Snap"> Auto-Ajustar (Snap)</button>
+                <button class="tool-btn" id="btnToolDelete" onclick="setScanTool('DELETE')" style="color: #ff4d88;"><img src="https://cdn-icons-png.flaticon.com/512/484/484611.png" class="icon" style="filter: brightness(0) saturate(100%) invert(32%) sepia(97%) saturate(2250%) hue-rotate(327deg) brightness(101%) contrast(106%);" alt="Borrar"> Borrar</button>
+            </div>
+
+            <div class="panel-zoom">
+                <button class="btn-zoom" id="btnZoomOut"><img src="https://cdn-icons-png.flaticon.com/128/2740/2740679.png" class="icon-sm" alt="-"></button>
+                <span id="txtZoom" style="font-weight:bold; width: 60px; text-align: center;">100%</span>
+                <button class="btn-zoom" id="btnZoomIn"><img src="https://cdn-icons-png.flaticon.com/128/3303/3303893.png" class="icon-sm" alt="+"></button>
+            </div>
+
+            <div class="canvas-wrapper" id="scanWrapper">
+                <canvas id="canvasSprites"></canvas>
+            </div>
+        </div>
+
+        <div id="win-orden" class="window-content">
+            <h2 class="section-title"><img src="https://cdn-icons-png.flaticon.com/512/151/151210.png" class="icon" style="filter: brightness(0) invert(24%) sepia(84%) saturate(7351%) hue-rotate(334deg) brightness(104%) contrast(108%);" alt="Secuenciador"> Secuenciador</h2>
+            <div class="batch-bar">
+                <button class="btn-pildora btn-secundario" id="btnSelectAll">Marcar/Desmarcar</button>
+                <input type="text" id="inputBatchName" placeholder="Escribe prefijo (ej: Idle)">
+                <button class="btn-pildora" id="btnAplicarBatch"><img src="https://cdn-icons-png.flaticon.com/512/616/616430.png" class="icon" alt="Renombrar"> Renombrar Marcados</button>
+            </div>
+            <div class="timeline-panel" id="timelineContainer"></div>
+        </div>
+
+        <div id="win-afinador" class="window-content">
+            <h2 class="section-title"><img src="https://cdn-icons-png.flaticon.com/512/126/126472.png" class="icon" style="filter: brightness(0) invert(24%) sepia(84%) saturate(7351%) hue-rotate(334deg) brightness(104%) contrast(108%);" alt="Afinador"> Laboratorio de Offsets</h2>
+            <div class="tuner-nav-bar">
+                <button onclick="prevFrame()"><img src="https://cdn-icons-png.flaticon.com/512/271/271228.png" class="icon-sm icon-no-margin" style="transform: rotate(180deg);" alt="Atras"></button>
+                <span id="lblCurrentFrame"><img src="https://cdn-icons-png.flaticon.com/128/6690/6690219.png" class="icon" alt="Frame"> Ningún Frame</span>
+                <button onclick="nextFrame()"><img src="https://cdn-icons-png.flaticon.com/512/271/271228.png" class="icon-sm icon-no-margin" style="transform: rotate(-0deg);" alt="Adelante"></button>
+            </div>
+            <div class="split-workspace">
+                <div class="fine-tuner">
+                    <div class="preview-box"><canvas id="canvasPreview"></canvas></div>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button class="btn-pildora btn-secundario" id="btnToggleRotar" style="flex:1;"><img src="https://cdn-icons-png.flaticon.com/128/45/45647.png" class="icon" alt="Rotar"> Rotar (0°)</button>
+                        <button class="btn-pildora" onclick="duplicarActualAfinador()" style="flex:1; background:var(--accent-gold); color:black; border:none;"><img src="https://cdn-icons-png.flaticon.com/512/1621/1621635.png" class="icon icon-black" alt="Duplicar"> Duplicar</button>
+                    </div>
+                    
+                    <div class="tuner-grid" style="margin-top:10px;">
+                        <div class="tuner-group"><label>frameX</label><div class="tuner-actions"><button class="btn-inc" onclick="incProp('frameX', -1)">-</button><input type="number" id="inp_frameX" onchange="changeProp('frameX', this.value)"><button class="btn-inc" onclick="incProp('frameX', 1)">+</button></div></div>
+                        <div class="tuner-group"><label>frameY</label><div class="tuner-actions"><button class="btn-inc" onclick="incProp('frameY', -1)">-</button><input type="number" id="inp_frameY" onchange="changeProp('frameY', this.value)"><button class="btn-inc" onclick="incProp('frameY', 1)">+</button></div></div>
+                        <div class="tuner-group"><label>frameWidth</label><div class="tuner-actions"><button class="btn-inc" onclick="incProp('frameWidth', -1)">-</button><input type="number" id="inp_frameWidth" onchange="changeProp('frameWidth', this.value)"><button class="btn-inc" onclick="incProp('frameWidth', 1)">+</button></div></div>
+                        <div class="tuner-group"><label>frameHeight</label><div class="tuner-actions"><button class="btn-inc" onclick="incProp('frameHeight', -1)">-</button><input type="number" id="inp_frameHeight" onchange="changeProp('frameHeight', this.value)"><button class="btn-inc" onclick="incProp('frameHeight', 1)">+</button></div></div>
+                        <div class="tuner-group"><label>width</label><div class="tuner-actions"><button class="btn-inc" onclick="incProp('w', -1)">-</button><input type="number" id="inp_w" onchange="changeProp('w', this.value)"><button class="btn-inc" onclick="incProp('w', 1)">+</button></div></div>
+                        <div class="tuner-group"><label>height</label><div class="tuner-actions"><button class="btn-inc" onclick="incProp('h', -1)">-</button><input type="number" id="inp_h" onchange="changeProp('h', this.value)"><button class="btn-inc" onclick="incProp('h', 1)">+</button></div></div>
+                    </div>
+                </div>
+                <div class="anim-manager-panel">
+                    <div class="anim-select-box"><select id="selectAnimFilter"><option value="ALL">-- Todo --</option></select></div>
+                    <div class="player-box"><canvas id="canvasLoopPlayer"></canvas></div>
+                    <div class="player-controls">
+                        <button class="btn-pildora" id="btnPlayPause" style="background:var(--accent-pink); color:white; width: 100%;"><img src="https://cdn-icons-png.flaticon.com/128/3249/3249396.png" class="icon" id="iconPlayPause" alt="Pausa"> PAUSAR</button>
+                        <div class="fps-control-bar"><button class="btn-fps" id="btnFpsDown">-</button><span id="txtFpsDisplay">24 FPS</span><button class="btn-fps" id="btnFpsUp">+</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="win-psych" class="window-content">
+            <h2 class="section-title" style="color: var(--accent-psych);"><img src="https://cdn-icons-png.flaticon.com/512/3135/3135692.png" class="icon" style="filter: brightness(0) saturate(100%) invert(86%) sepia(85%) saturate(1637%) hue-rotate(34deg) brightness(108%) contrast(106%);" alt="Psych"> Psych Live Editor</h2>
+            <div class="psych-grid">
+                
+                <div class="psych-panel">
+                    <h3 style="margin:0 0 5px 0; font-size: 0.9rem; color:white; display:flex; align-items:center;"><img src="https://cdn-icons-png.flaticon.com/512/126/126472.png" class="icon" alt="Globales"> Globales</h3>
+                    <div class="form-group"><label>Image Path</label><input type="text" id="p_image" value="characters/BOYFRIEND" oninput="updatePsychLive()"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Icon</label><input type="text" id="p_icon" value="bf"></div>
+                        <div class="form-group"><label>Bar Color</label><input type="color" id="p_color" value="#31b0d1" style="height:28px;"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Scale</label><input type="number" id="p_scale" value="1" step="0.1" oninput="updatePsychLive()"></div>
+                        <div class="form-group"><label>Sing Dur</label><input type="number" id="p_sing" value="4"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Cam X</label><input type="number" id="p_camX" value="0"></div>
+                        <div class="form-group"><label>Cam Y</label><input type="number" id="p_camY" value="0"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>World X</label><input type="number" id="p_posX" value="0"></div>
+                        <div class="form-group"><label>World Y</label><input type="number" id="p_posY" value="350"></div>
+                    </div>
+                    <div style="display:flex; gap:15px; margin-top:5px;">
+                        <label style="color:white; font-size:0.8rem;"><input type="checkbox" id="p_flip" onchange="updatePsychLive()"> Flip X</label>
+                        <label style="color:white; font-size:0.8rem;"><input type="checkbox" id="p_antialias" checked onchange="updatePsychLive()"> Antialiasing</label>
+                    </div>
+                </div>
+
+                <div class="psych-preview-container">
+                    <div class="crosshair"></div><div class="crosshair v"></div>
+                    <canvas id="canvasPsychLive"></canvas>
+                </div>
+
+                <div class="psych-panel">
+                    <h3 style="margin:0 0 5px 0; font-size: 0.9rem; color:white; display:flex; align-items:center;"><img src="https://cdn-icons-png.flaticon.com/512/2503/2503508.png" class="icon" alt="Animaciones"> Animaciones</h3>
+                    <div style="background: #05060f; padding: 8px; border-radius:6px; border:1px solid #222; margin-bottom:10px;">
+                        <div class="form-row">
+                            <div class="form-group"><label>Anim (JSON)</label><input type="text" id="p_animName" placeholder="ej: singUP"></div>
+                            <div class="form-group"><label>XML Prefix</label><select id="p_animPrefix"></select></div>
+                        </div>
+                        <button class="btn-pildora" style="background: var(--accent-psych); border:none; color:black; width:100%; padding:6px;" onclick="addPsychAnimation()"><img src="https://cdn-icons-png.flaticon.com/512/1828/1828817.png" class="icon icon-black" alt="Añadir"> Añadir</button>
+                    </div>
+                    <div class="anim-list" id="psychAnimList"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay-ia" id="iaLoader" style="display: none;">
+        <div class="ia-box">
+            <div class="ia-spinner"></div>
+            <div class="ia-titulo" id="iaTitle" style="color:var(--accent-pink);">PROCESANDO</div>
+            <div class="ia-progreso" id="iaStatusTxt">Inicializando...</div>
+        </div>
+    </div>
+
+    <div class="overlay-modal" id="welcomeModal" style="display: none;">
+        <div class="modal-box">
+            <h2 class="modal-title">¡Bienvenido a Spritesheet Generator FNF</h2>
+            <div class="modal-body">
+                <p>La herramienta definitiva creada en la web para optimizar y crear spritesheets listos para <b>Friday Night Funkin'</b>. Esto es lo que puedes hacer aquí:</p>
+                
+                <ul class="modal-list">
+                    <li><img src="https://cdn-icons-png.flaticon.com/512/65/65508.png" class="icon-sm"> <b>Escanear de Cero:</b> Sube un PNG y la web detectará, fusionará y recortará las cajas de tus dibujos automáticamente sin batallar.</li>
+                    <li><img src="https://cdn-icons-png.flaticon.com/512/1041/1041985.png" class="icon-sm"> <b>Optimizador:</b> Sube tu XML y tu PNG del personaje para poder editar sprites o frames mal acomodados sin necesidad de editar el xml a mano.</li>
+                    <li><img src="https://cdn-icons-png.flaticon.com/512/3135/3135692.png" class="icon-sm"> <b>Psych Character Buldier:</b> Puedes crear un archivo JSON sin necesidad de entrar al Character Editor del juego, todo se muestra en tiempo real.</li>
+                </ul>
+            </div>
+            <button class="btn-pildora btn-modal-action" onclick="closeWelcomeModal()">¡Comenzar a Crear!</button>
+        </div>
+    </div>
+
+    <div class="overlay-modal" id="changelogModal" style="display: none;">
+        <div class="modal-box modal-box-changelog">
+            <h2 class="modal-title" style="color: var(--accent-gold);">¡Que hay en la Versión 1.0! ✨</h2>
+            <div class="modal-body">
+                <p>El proyecto ha sido lanzado. Aquí esta lo que tiene implementado:</p>
+                <ul class="modal-list">
+                    <li><b><span style="color: var(--accent-gold);">[NUEVO]</span> Menús Tutorial y Changelog:</b> Ventanas informativas con detalles de uso y muchas funcionalidades.</li>
+                </ul>
+            </div>
+            <button class="btn-pildora btn-modal-action" style="background: linear-gradient(135deg, #b38f00, #665200); border-color: var(--accent-gold);" onclick="closeChangelogModal()">¡Entendido!</button>
+        </div>
+    </div>
+
+    <script src="js/main.js" defer></script>
+</body>
+</html>
