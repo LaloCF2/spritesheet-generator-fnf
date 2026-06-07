@@ -1,7 +1,7 @@
 {
   "name": "Spritesheet Generator FNF",
   "short_name": "Spritesheet Generator FNF",
-  "version": "1.0"
+  "version": "1.0",
   "description": "Un generador de spritesheet en la web.",
   "start_url": "index.html",
   "display": "standalone",
