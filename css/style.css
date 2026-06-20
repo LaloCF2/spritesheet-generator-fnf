@@ -223,7 +223,6 @@ canvas#canvasSprites {
 .ia-spinner { width: 50px; height: 50px; border: 4px solid #1c203f; border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px auto; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* Modales de Tutorial y Changelog */
 .overlay-modal {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     background: rgba(4, 4, 8, 0.90); backdrop-filter: blur(5px);
@@ -294,4 +293,24 @@ canvas#canvasSprites {
     margin-top: 30px;
     width: 100%; 
     letter-spacing: 1px;
+}
+
+/* ==========================================
+   TEMAS VISUALES CUSTOMIZABLES
+========================================== */
+body.theme-psych {
+    --accent: #b612fd; --accent-pink: #ff96a6; 
+    --window-bg: #030600; --panel: #0a1400; --panel-light: #1d051a;
+}
+body.theme-bf {
+    --accent: #31B0D1; --accent-pink: #EE1536; 
+    --window-bg: #000a12; --panel: #001a2d; --panel-light: #002d4d;
+}
+
+/* EFECTO VISUAL DRAG AND DROP */
+.timeline-item.drag-over {
+    border-color: var(--accent) !important;
+    transform: scale(1.02);
+    background: #1c203a;
+    box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.4);
 }
