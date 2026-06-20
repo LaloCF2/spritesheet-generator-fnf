@@ -1,6 +1,6 @@
 {
   "name": "Spritesheet Generator FNF",
-  "short_name": "SpriteGen FNF",
+  "short_name": "Spritesheet Generator FNF",
   "description": "Herramienta definitiva creada por LaloCF.",
   "start_url": "./index.html",
   "display": "standalone",
