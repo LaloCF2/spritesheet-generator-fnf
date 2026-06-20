@@ -1,12 +1,17 @@
 {
-  "name": "Spritesheet Generator FNF",
-  "short_name": "Spritesheet Generator FNF",
-  "description": "Herramienta definitiva creada por LaloCF.",
+  "name": "Spritesheet Generator FNF Pro",
+  "short_name": "SpriteGen FNF",
+  "description": "Herramienta creada por LaloCF para optimizar spritesheets.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#020308",
   "theme_color": "#00e5ff",
   "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
