@@ -2,6 +2,14 @@
 // PSYCH ENGINE JSON BUILDER
 // ==========================================
 
+function changePsychBg(bgClass) {
+    let container = document.getElementById('psychPreviewContainer');
+    container.className = 'psych-preview-container ' + bgClass;
+    
+    document.getElementById('psychStageLayers').style.display = (bgClass === 'bg-stage') ? 'block' : 'none';
+    document.getElementById('psychBgEditorLayer').style.display = (bgClass === 'bg-editor') ? 'block' : 'none';
+}
+
 function actualizarDropdownPsych() {
     p_animPrefix.innerHTML = ''; let prefijos = new Set(); spritesDetectados.forEach(s => { let base = s.name.replace(/\d+$/, ''); if(base) prefijos.add(base); });
     prefijos.forEach(p => { let opt = document.createElement('option'); opt.value = p; opt.textContent = p; p_animPrefix.appendChild(opt); });
