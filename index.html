@@ -41,27 +41,7 @@
     </div>
     <div class="app-header">
         <h1 class="app-title">
-            <div class="fab-container">
-                <button class="fab-btn darkmode-btn" onclick="toggleDarkMode()" title="Modo Oscuro/Claro">
-                    <img src="https://cdn-icons-png.flaticon.com/128/11885/11885172.png" id="darkModeIcon"
-                        class="icon-sm icon-black" alt="Dark Mode">
-                </button>
-                <button class="fab-btn theme-btn" onclick="toggleThemeMenu()">
-                    <img src="https://cdn-icons-png.flaticon.com/128/893/893322.png" class="icon-sm icon-black"
-                        alt="Theme">
-                </button>
-                <div class="fab-menu" id="fabThemeMenu">
-                    <button class="fab-item" onclick="changeTheme('cyberpunk'); toggleThemeMenu();">
-                        <span class="fab-color-dot" style="background: #f1a9d4;"></span> Pastel (Predeterminado)
-                    </button>
-                    <button class="fab-item" onclick="changeTheme('psych'); toggleThemeMenu();">
-                        <span class="fab-color-dot" style="background: #aaff00;"></span> Tema Psych
-                    </button>
-                    <button class="fab-item" onclick="changeTheme('bf'); toggleThemeMenu();">
-                        <span class="fab-color-dot" style="background: #31b0d1;"></span> Tema BF
-                    </button>
-                </div>
-            </div>
+
             <img src="https://cdn-icons-png.flaticon.com/128/17196/17196492.png" class="icon logo-icon" alt="Logo">
             Spritesheet Generator FNF'
         </h1>
@@ -819,9 +799,9 @@
 
     <div class="overlay-modal" id="changelogModal" style="display: none;">
         <div class="modal-box modal-box-changelog">
-            <h2 class="modal-title" style="color: var(--accent-gold);">¡Novedades en la Versión 1.2! ✨</h2>
+            <h2 class="modal-title" style="color: var(--accent-gold);">¡Novedades en la Versión 1.2.1! ✨</h2>
             <div class="modal-body">
-                <p>El proyecto se ha actualizado. Aquí tienes los últimos cambios implementados v1.2:</p>
+                <p>El proyecto se ha actualizado. Aquí tienes los últimos cambios implementados v1.2.1:</p>
                 <ul class="modal-list">
                     <li><b><span style="color: #ffaa00;">[NUEVO]</span> Compresor Audio OGG:</b> Ya puedes bajar el peso
                         de tus Instrumentales y Voces sin instalar nada, directamente en la página con motor FFmpeg.
@@ -834,6 +814,9 @@
                     <li><b><span style="color: var(--accent);">[NUEVO]</span> Conversor Animate Atlas:</b> Este escaner
                         realiza uan funcion
                         para tener todos los prites en .PNG y .XML.</li>
+                    <li><b><span style="color: var(--accent);">[NUEVO]</span> Correccion de Errores:</b>Se solucionaron
+                        varios errores,
+                        y agregando nuevas funciones utiles.</li>
                 </ul>
             </div>
             <button class="btn-pildora btn-modal-action"
@@ -842,6 +825,54 @@
         </div>
     </div>
 
+    <!-- MODAL HISTORIAL -->
+    <div class="overlay-modal" id="historyModal" style="display:none;">
+        <div class="modal-box">
+            <h2 class="modal-title"><img src="https://cdn-icons-png.flaticon.com/128/2088/2088617.png"
+                    style="width:30px; filter:brightness(0) invert(1);"> Sesión Anterior</h2>
+            <div class="modal-body" id="historyModalContent">
+                <!-- Se inyecta desde js -->
+            </div>
+            <button class="btn-pildora btn-secundario" style="width:100%; margin-top:20px;"
+                onclick="closeHistoryModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- FAB WRAPPER: MODO OSCURO -->
+    <div class="fab-wrap-dark">
+        <button class="fab-btn darkmode-btn" onclick="toggleDarkMode()" title="Modo Oscuro/Claro">
+            <img src="https://cdn-icons-png.flaticon.com/128/11885/11885172.png" id="darkModeIcon"
+                class="icon-sm icon-black" alt="Dark Mode">
+        </button>
+    </div>
+
+    <!-- FAB WRAPPER: HISTORIAL -->
+    <div class="fab-wrap-history">
+        <button class="fab-btn history-btn" onclick="showHistoryModal()" title="Historial / Autoguardado"
+            style="background: rgba(255,170,0,0.6);">
+            <img src="https://cdn-icons-png.flaticon.com/128/2088/2088617.png" class="icon-sm icon-black" alt="History">
+        </button>
+    </div>
+
+    <!-- FAB WRAPPER: TEMA -->
+    <div class="fab-wrap-theme">
+        <button class="fab-btn theme-btn" onclick="toggleThemeMenu()" title="Cambiar Tema">
+            <img src="https://cdn-icons-png.flaticon.com/128/893/893322.png" class="icon-sm icon-black" alt="Theme">
+        </button>
+        <div class="fab-menu" id="fabThemeMenu">
+            <button class="fab-item" onclick="changeTheme('cyberpunk'); toggleThemeMenu();">
+                <span class="fab-color-dot" style="background: #f1a9d4;"></span> Pastel (Predeterminado)
+            </button>
+            <button class="fab-item" onclick="changeTheme('psych'); toggleThemeMenu();">
+                <span class="fab-color-dot" style="background: #aaff00;"></span> Tema Psych
+            </button>
+            <button class="fab-item" onclick="changeTheme('bf'); toggleThemeMenu();">
+                <span class="fab-color-dot" style="background: #31b0d1;"></span> Tema BF
+            </button>
+        </div>
+    </div>
+
+    <script src="js/history.js"></script>
     <script src="js/main.js" defer></script>
     <script src="js/escaner.js" defer></script>
     <script src="js/optimizador.js" defer></script>
