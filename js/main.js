@@ -1,10 +1,9 @@
 // ==========================================
 // 1. main.js - NÚCLEO GLOBAL, VARIABLES Y FUNCIONES
 // ==========================================
-const CURRENT_VERSION = '1.2'; // ¡Sube este número para mostrar el Changelog!
+const CURRENT_VERSION = '1.2.1';
 
 window.onload = () => {
-    // 1. Inicializar el Tema Visual
     const savedTheme = localStorage.getItem('iasprite_theme') || 'cyberpunk';
     changeTheme(savedTheme);
 
@@ -13,21 +12,17 @@ window.onload = () => {
         document.body.classList.add('dark-mode');
     }
 
-    // 2. Comprobar Versión para Mostrar Modales (Bienvenida y Novedades)
     const lastVersion = localStorage.getItem('iasprite_version');
 
     if (!lastVersion) {
-        // Usuario totalmente nuevo
         let modWelcome = document.getElementById('welcomeModal');
         if (modWelcome) modWelcome.style.display = 'flex';
     } else if (lastVersion !== CURRENT_VERSION) {
-        // Usuario antiguo, pero se detecta una nueva versión
         let modChangelog = document.getElementById('changelogModal');
         if (modChangelog) modChangelog.style.display = 'flex';
     }
 };
 
-// Funciones para cerrar los modales y guardar la nueva versión
 window.closeWelcomeModal = function () {
     document.getElementById('welcomeModal').style.display = 'none';
     localStorage.setItem('iasprite_version', CURRENT_VERSION);
@@ -61,7 +56,6 @@ function selectPreset(preset) {
     togglePresetDropdown();
 }
 
-// Cerrar dropdown si se hace clic afuera
 window.onclick = function (event) {
     if (!event.target.matches('.dropdown-btn')) {
         let dropdown = document.getElementById('presetDropdown');
@@ -71,14 +65,11 @@ window.onclick = function (event) {
     }
 }
 
-// VARIABLES GLOBALES (Compartidas)
-let appMode = 'HOME'; let imgOriginal = new Image(); let nombreArchivo = "spritesheet.png";
-let spritesDetectados = []; let psychAnimations = []; let indexEditando = null;
+var appMode = 'HOME'; var imgOriginal = new Image(); var nombreArchivo = "spritesheet.png";
+var spritesDetectados = []; var psychAnimations = []; var indexEditando = null;
 
-// MOTOR DE VISTA CSS
 let zoomActual = 1.0; let panX = 0, panY = 0; let globalMode = 'VIEW';
 
-// DOM GLOBALES
 const scanWrapper = document.getElementById('scanWrapper');
 const canvas = document.getElementById('canvasSprites'); const ctx = canvas.getContext('2d');
 const canvasPreview = document.getElementById('canvasPreview'); const ctxPreview = canvasPreview.getContext('2d');
@@ -98,7 +89,6 @@ document.getElementById('sliderCorte').addEventListener('input', (e) => document
 document.getElementById('sliderUnion').addEventListener('input', (e) => document.getElementById('valUnion').textContent = e.target.value);
 document.getElementById('sliderPad').addEventListener('input', (e) => document.getElementById('valPad').textContent = e.target.value);
 
-// RENOMBRADOR AUTOMÁTICO
 window.autoRenumerar = function () {
     let contadores = {};
     spritesDetectados.forEach(s => {
@@ -173,11 +163,11 @@ function initMode(mode) {
     if (mode === 'COMPRESS') openWindow('win-compresor');
     if (mode === 'AUDIO') openWindow('win-audio');
     if (mode === 'ATLAS') openWindow('win-atlas');
+    if (typeof window.autoSaveHistory === 'function') window.autoSaveHistory();
 }
 const pensar = (ms) => new Promise(res => setTimeout(res, ms));
 function showLoader(title, text) { document.getElementById('iaTitle').textContent = title; iaStatusTxt.innerHTML = text; iaLoader.style.display = 'flex'; }
 
-// CARGA DE IMÁGENES Y XML
 function loadMainImage(file, callback) {
     if (!file) return; showLoader("CARGANDO...", "Leyendo imagen PNG..."); nombreArchivo = file.name;
     const reader = new FileReader();
@@ -239,11 +229,10 @@ function finalizarCargaGeneral(mode) {
     document.getElementById('iaLoader').style.display = 'none';
     if (mode === 'EDIT') openWindow('win-orden');
     if (mode === 'PSYCH') openWindow('win-psych');
+
+    if (typeof window.autoSaveHistory === 'function') window.autoSaveHistory();
 }
 
-// ==========================================
-// DRAG AND DROP GLOBAL
-// ==========================================
 window.addEventListener('dragover', (e) => {
     e.preventDefault();
     document.getElementById('dragOverlay').classList.add('active');
