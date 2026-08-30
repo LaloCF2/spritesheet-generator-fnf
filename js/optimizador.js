@@ -179,3 +179,94 @@ function exportarActual() {
         let baseName = nombreArchivo.replace(/\.[^/.]+$/, ""); a.download = baseName + ".xml"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 }
+
+// ==========================================
+// RESIZE INTELIGENTE (IMAGEN Y XML)
+// ==========================================
+
+function toggleCustomResizeInput() {
+    let sel = document.getElementById('selResizeFactor');
+    let inp = document.getElementById('inpResizeCustom');
+    if (sel.value === 'custom') {
+        inp.style.display = 'inline-block';
+    } else {
+        inp.style.display = 'none';
+    }
+}
+
+function actualizarLabelResolucion() {
+    let lbl = document.getElementById('lblResizeCurrent');
+    if (lbl && imgOriginal && imgOriginal.width > 0) {
+        lbl.innerHTML = `<img src="https://cdn-icons-png.flaticon.com/128/3114/3114883.png" class="icon-sm" alt="Size"> Tamaño: ${imgOriginal.width} x ${imgOriginal.height}`;
+    }
+}
+
+async function aplicarResizeOptimizador() {
+    if (!imgOriginal || imgOriginal.width === 0 || spritesDetectados.length === 0) {
+        return alert("❌ Primero debes subir una imagen y un XML (Modo Optimizador).");
+    }
+
+    let sel = document.getElementById('selResizeFactor').value;
+    let factor = 1.0;
+
+    if (sel === 'recommend') {
+        let maxDim = Math.max(imgOriginal.width, imgOriginal.height);
+        if (maxDim > 4000) factor = 0.5;
+        else if (maxDim > 2048) factor = 2048 / maxDim;
+        else if (maxDim > 1024) factor = 0.75;
+        else {
+            return alert("✅ Tu imagen ya está optimizada o es muy pequeña (menor a 1024px). No es necesario reducirla.");
+        }
+    } else if (sel === 'custom') {
+        let val = parseFloat(document.getElementById('inpResizeCustom').value);
+        if (isNaN(val) || val <= 0 || val > 100) return alert("❌ Ingresa un porcentaje válido (1-100).");
+        factor = val / 100.0;
+    } else {
+        factor = parseFloat(sel);
+    }
+
+    if (factor >= 1.0) return alert("❌ El factor debe ser menor para reducir el tamaño.");
+
+    showLoader("REESCALANDO", "Redimensionando imagen y ajustando XML (esto puede tardar unos segundos)...");
+    await pensar(100);
+
+    let newWidth = Math.round(imgOriginal.width * factor);
+    let newHeight = Math.round(imgOriginal.height * factor);
+
+    let tempCanvas = document.createElement('canvas');
+    tempCanvas.width = newWidth;
+    tempCanvas.height = newHeight;
+    let tempCtx = tempCanvas.getContext('2d');
+    
+    // Mejor interpolación en canvas
+    tempCtx.imageSmoothingEnabled = true;
+    tempCtx.imageSmoothingQuality = 'high';
+    tempCtx.drawImage(imgOriginal, 0, 0, newWidth, newHeight);
+
+    let newImgSrc = tempCanvas.toDataURL("image/png");
+
+    spritesDetectados.forEach(s => {
+        s.x = Math.round(s.x * factor);
+        s.y = Math.round(s.y * factor);
+        s.w = Math.round(s.w * factor);
+        s.h = Math.round(s.h * factor);
+        s.frameX = Math.round((s.frameX || 0) * factor);
+        s.frameY = Math.round((s.frameY || 0) * factor);
+        s.frameWidth = Math.round((s.frameWidth || s.w) * factor);
+        s.frameHeight = Math.round((s.frameHeight || s.h) * factor);
+    });
+
+    let newImg = new Image();
+    newImg.onload = () => {
+        imgOriginal = newImg;
+        actualizarLabelResolucion();
+        renderTimelineSecuenciador();
+        if (indexEditando !== null) seleccionarFrameAfinador(indexEditando);
+        if (typeof dibujarContornos === 'function') dibujarContornos();
+        
+        document.getElementById('iaLoader').style.display = 'none';
+        alert(`¡Optimización completada!\nNuevo tamaño de imagen: ${newWidth}x${newHeight}\nEl XML ha sido ajustado automáticamente.`);
+        if (typeof window.autoSaveHistory === 'function') window.autoSaveHistory();
+    };
+    newImg.src = newImgSrc;
+}

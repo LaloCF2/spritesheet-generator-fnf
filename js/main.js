@@ -222,6 +222,7 @@ function finalizarCargaGeneral(mode) {
     if ((mode === 'SCAN' || mode === 'EDIT') && typeof dibujarContornos === 'function') dibujarContornos();
     if (typeof actualizarDropdownFiltros === 'function') actualizarDropdownFiltros();
     if (typeof actualizarDropdownPsych === 'function') actualizarDropdownPsych();
+    if (typeof actualizarLabelResolucion === 'function') actualizarLabelResolucion();
     if (mode !== 'PSYCH' && typeof renderTimelineSecuenciador === 'function') renderTimelineSecuenciador();
     currentLoopFrameIdx = 0;
     if (typeof updatePlayerInterval === 'function') updatePlayerInterval();
