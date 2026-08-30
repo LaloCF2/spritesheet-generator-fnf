@@ -381,6 +381,10 @@ async function aplicarResizeOptimizador() {
     let newImg = new Image();
     newImg.onload = () => {
         imgOriginal = newImg;
+        if (typeof canvas !== 'undefined' && canvas !== null) {
+            canvas.width = newImg.width;
+            canvas.height = newImg.height;
+        }
         actualizarLabelResolucion();
         renderTimelineSecuenciador();
         if (indexEditando !== null) seleccionarFrameAfinador(indexEditando);
