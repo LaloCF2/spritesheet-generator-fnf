@@ -157,7 +157,7 @@ async function repackAndExport() {
         zip.generateAsync({ type: "blob" }).then(function (content) {
             let aZip = document.createElement('a'); aZip.href = URL.createObjectURL(content);
             aZip.download = finalBaseName + ".zip"; aZip.click();
-            document.getElementById('iaLoader').style.display = 'none';
+            ocultarCargaGlobal();
             alert(`¡Éxito! Imagen comprimida.\nSe eliminaron ${dupCount} frames duplicados.\nTu archivo ZIP se ha descargado.`);
         });
     });
@@ -290,7 +290,7 @@ async function aplicarResizeOptimizador() {
         if (indexEditando !== null) seleccionarFrameAfinador(indexEditando);
         if (typeof dibujarContornos === 'function') dibujarContornos();
         
-        document.getElementById('iaLoader').style.display = 'none';
+        ocultarCargaGlobal();
         alert(`¡Optimización completada!\nNuevo tamaño de imagen: ${newWidth}x${newHeight}\nEl XML ha sido ajustado automáticamente.`);
         if (typeof window.autoSaveHistory === 'function') window.autoSaveHistory();
     };

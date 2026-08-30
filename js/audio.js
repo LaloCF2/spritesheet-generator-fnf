@@ -142,11 +142,11 @@ async function ejecutarCompresionAudio() {
             a.click();
         };
         btnDown.style.display = 'block';
-        document.getElementById('iaLoader').style.display = 'none';
+        ocultarCargaGlobal();
 
     } catch (e) {
         console.error(e);
-        document.getElementById('iaLoader').style.display = 'none';
+        ocultarCargaGlobal();
         alert("❌ Error en Motor OGG: " + (e.message || e) + "\n\nIntenta reiniciar la pagina, cargarlo desde incognito o cambiar de navegador si este problema persiste.");
     }
 }

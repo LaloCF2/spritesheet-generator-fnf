@@ -185,12 +185,12 @@ window.restoreHistorySession = async function(id) {
                     if(typeof window.actualizarDropdownPsych === 'function') window.actualizarDropdownPsych();
                     
                     if(typeof window.initMode === 'function') window.initMode(session.appMode);
-                    let iaL = document.getElementById('iaLoader'); if(iaL) iaL.style.display = 'none';
+                    ocultarCargaGlobal();
                 };
                 window.imgOriginal.src = session.imgSrc;
             } else {
                 if(typeof window.initMode === 'function') window.initMode(session.appMode);
-                let iaL = document.getElementById('iaLoader'); if(iaL) iaL.style.display = 'none';
+                ocultarCargaGlobal();
             }
         } 
         else if (session.appMode === 'AUDIO') {
@@ -203,7 +203,7 @@ window.restoreHistorySession = async function(id) {
                 if(typeof window.detectBPM === 'function') window.detectBPM(session.audioFile);
             }
             if(typeof window.initMode === 'function') window.initMode('AUDIO');
-            let iaL = document.getElementById('iaLoader'); if(iaL) iaL.style.display = 'none';
+            ocultarCargaGlobal();
         }
         else if (session.appMode === 'ATLAS') {
             window.atlasAnimObj = session.atlasAnimObj || null;
@@ -212,21 +212,21 @@ window.restoreHistorySession = async function(id) {
                 window.atlasPngImg = new Image();
                 window.atlasPngImg.onload = () => {
                     if(typeof window.updateAtlasPreview === 'function') window.updateAtlasPreview();
-                    let iaL = document.getElementById('iaLoader'); if(iaL) iaL.style.display = 'none';
+                    ocultarCargaGlobal();
                 };
                 window.atlasPngImg.src = session.atlasPngImgSrc;
             } else {
                 if(typeof window.updateAtlasPreview === 'function') window.updateAtlasPreview();
-                let iaL = document.getElementById('iaLoader'); if(iaL) iaL.style.display = 'none';
+                ocultarCargaGlobal();
             }
             if(typeof window.initMode === 'function') window.initMode('ATLAS');
         } else {
             if(typeof window.initMode === 'function') window.initMode(session.appMode);
-            let iaL = document.getElementById('iaLoader'); if(iaL) iaL.style.display = 'none';
+            ocultarCargaGlobal();
         }
     } catch(e) {
         console.error(e);
-        let iaL = document.getElementById('iaLoader'); if(iaL) iaL.style.display = 'none';
+        ocultarCargaGlobal();
         alert("Error al restaurar la sesión.");
     }
 };

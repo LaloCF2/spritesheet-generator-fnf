@@ -252,7 +252,7 @@ document.getElementById('btnProcesar').addEventListener('click', () => {
 
             } catch (error) {
                 console.error("Error en el motor:", error);
-                document.getElementById('iaLoader').style.display = 'none';
+                ocultarCargaGlobal();
                 alert("❌ Hubo un error de cálculo procesando los datos. Detalle: " + error.message);
             }
         }

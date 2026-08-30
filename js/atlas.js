@@ -309,7 +309,7 @@ async function ejecutarAtlasBaker() {
     a.download = baseName + "_Baked.zip";
     a.click();
 
-    document.getElementById('iaLoader').style.display = 'none';
+    ocultarCargaGlobal();
     let box = document.getElementById('atlasPreviewBox');
     box.innerHTML = `
         <div style="font-size:2rem; font-weight:bold; color:var(--accent-gold);">¡GENERADO!</div>

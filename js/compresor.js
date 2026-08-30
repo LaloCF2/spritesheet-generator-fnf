@@ -30,7 +30,7 @@ document.getElementById('imgCompresorUpload').addEventListener('change', (e) => 
             document.getElementById('btnDownloadComp').style.display = 'none';
             document.getElementById('btnRunCompressor').style.display = 'block';
             
-            iaLoader.style.display = 'none';
+            ocultarCargaGlobal();
         };
         img.src = ev.target.result;
     };
@@ -76,10 +76,10 @@ async function ejecutarCompresion() {
             };
             
             btnDown.style.display = 'block';
-            iaLoader.style.display = 'none';
+            ocultarCargaGlobal();
             
         } catch(e) {
-            iaLoader.style.display = 'none';
+            ocultarCargaGlobal();
             alert("❌ Hubo un error al comprimir la imagen. Puede que sea demasiado grande para la memoria del navegador. Intenta reiniciar la página.");
             console.error(e);
         }

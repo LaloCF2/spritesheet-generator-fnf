@@ -1,7 +1,7 @@
 // ==========================================
 // 1. main.js - NÚCLEO GLOBAL, VARIABLES Y FUNCIONES
 // ==========================================
-const CURRENT_VERSION = '1.2.1';
+const CURRENT_VERSION = '1.3';
 
 window.onload = () => {
     const savedTheme = localStorage.getItem('iasprite_theme') || 'cyberpunk';
@@ -21,7 +21,26 @@ window.onload = () => {
         let modChangelog = document.getElementById('changelogModal');
         if (modChangelog) modChangelog.style.display = 'flex';
     }
+
+    // Quitar el loader global despus de que todo carg
+    setTimeout(() => {
+        ocultarCargaGlobal();
+    }, 500);
 };
+
+function mostrarCargaGlobal(mensaje) {
+    let gl = document.getElementById('globalLoader');
+    let gt = document.getElementById('globalLoaderText');
+    if (gl) {
+        if (gt) gt.innerText = mensaje || "Cargando...";
+        gl.classList.remove('hidden');
+    }
+}
+
+function ocultarCargaGlobal() {
+    let gl = document.getElementById('globalLoader');
+    if (gl) gl.classList.add('hidden');
+}
 
 window.closeWelcomeModal = function () {
     document.getElementById('welcomeModal').style.display = 'none';
@@ -80,7 +99,7 @@ const timelineContainer = document.getElementById('timelineContainer');
 const selectAnimFilter = document.getElementById('selectAnimFilter');
 const p_animPrefix = document.getElementById('p_animPrefix');
 const psychAnimList = document.getElementById('psychAnimList');
-const iaLoader = document.getElementById('iaLoader'); const iaStatusTxt = document.getElementById('iaStatusTxt');
+// Variables removed
 
 let playActive = true; let playInterval = null; let currentLoopFrameIdx = 0; let fpsActual = 24;
 let psychLiveActiveAnimIdx = -1; let psychLiveFrameIdx = 0; let psychLiveInterval = null;
@@ -117,7 +136,10 @@ window.duplicarActualAfinador = function () {
     if (typeof seleccionarFrameAfinador === 'function') seleccionarFrameAfinador(indexEditando + 1);
 };
 
-function openWindow(winId) {
+async function openWindow(winId) {
+    mostrarCargaGlobal("Cargando seccin...");
+    await pensar(50); // Mnima pausa para que el navegador renderice el blur
+
     document.querySelectorAll('.window-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.win-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(winId).classList.add('active');
@@ -133,6 +155,8 @@ function openWindow(winId) {
     if (winId === 'win-orden' && typeof renderTimelineSecuenciador === 'function') { renderTimelineSecuenciador(); }
     if (winId === 'win-psych' && typeof startPsychLiveLoop === 'function') { startPsychLiveLoop(); }
     if (winId === 'win-escaner' && typeof actualizarCSSCamera === 'function') { actualizarCSSCamera(); dibujarContornos(); }
+
+    setTimeout(() => { ocultarCargaGlobal(); }, 200);
 }
 
 function toggleNavButtons() {
@@ -166,10 +190,12 @@ function initMode(mode) {
     if (typeof window.autoSaveHistory === 'function') window.autoSaveHistory();
 }
 const pensar = (ms) => new Promise(res => setTimeout(res, ms));
-function showLoader(title, text) { document.getElementById('iaTitle').textContent = title; iaStatusTxt.innerHTML = text; iaLoader.style.display = 'flex'; }
+function showLoader(titulo, mensaje) {
+    mostrarCargaGlobal(titulo + " - " + mensaje);
+}
 
 function loadMainImage(file, callback) {
-    if (!file) return; showLoader("CARGANDO...", "Leyendo imagen PNG..."); nombreArchivo = file.name;
+    if (!file) return; mostrarCargaGlobal("Cargando imagen PNG..."); nombreArchivo = file.name;
     window.lastResizeFactor = 1.0;
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -180,13 +206,13 @@ function loadMainImage(file, callback) {
             zoomActual = Math.min(1.0, scaleX, scaleY); if (zoomActual <= 0) zoomActual = 0.1;
             panX = (rect.width - (imgOriginal.width * zoomActual)) / 2; panY = (rect.height - (imgOriginal.height * zoomActual)) / 2;
             if (typeof actualizarCSSCamera === 'function') actualizarCSSCamera();
-            document.getElementById('iaLoader').style.display = 'none';
+            ocultarCargaGlobal();
             if (callback) callback();
         };
-        imgOriginal.onerror = () => { document.getElementById('iaLoader').style.display = 'none'; alert("❌ Error al cargar la imagen."); }
+        imgOriginal.onerror = () => { ocultarCargaGlobal(); alert("❌ Error al cargar la imagen."); }
         imgOriginal.src = event.target.result;
     };
-    reader.onerror = () => { document.getElementById('iaLoader').style.display = 'none'; alert("❌ Error al leer el archivo."); }
+    reader.onerror = () => { ocultarCargaGlobal(); alert("❌ Error al leer el archivo."); }
     reader.readAsDataURL(file);
 }
 
@@ -228,7 +254,7 @@ function finalizarCargaGeneral(mode) {
     currentLoopFrameIdx = 0;
     if (typeof updatePlayerInterval === 'function') updatePlayerInterval();
     if (spritesDetectados.length > 0 && typeof seleccionarFrameAfinador === 'function') seleccionarFrameAfinador(0);
-    document.getElementById('iaLoader').style.display = 'none';
+    ocultarCargaGlobal();
     if (mode === 'EDIT') openWindow('win-orden');
     if (mode === 'PSYCH') openWindow('win-psych');
 
