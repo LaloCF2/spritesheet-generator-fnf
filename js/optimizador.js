@@ -161,7 +161,9 @@ async function repackAndExport() {
         let json = JSON.parse(JSON.stringify(window.uploadedAnimationJSON.obj));
         if (isOptimized) {
             let factor = window.lastResizeFactor;
-            json.scale = Number(((json.scale || 1) / factor).toFixed(2));
+            // Escalar scale inversamente para mantener tamaño visual en Psych Engine
+            json.scale = Number(((json.scale || 1) / factor).toFixed(4));
+            // Ajustar offsets de cada animación
             if (json.animations) {
                 json.animations.forEach(anim => {
                     if (anim.offsets) {
@@ -169,6 +171,16 @@ async function repackAndExport() {
                         anim.offsets[1] = Math.round(anim.offsets[1] * factor);
                     }
                 });
+            }
+            // Ajustar posición del personaje en el escenario
+            if (json.position) {
+                json.position[0] = Math.round(json.position[0] * factor);
+                json.position[1] = Math.round(json.position[1] * factor);
+            }
+            // Ajustar posición de la cámara
+            if (json.camera_position) {
+                json.camera_position[0] = Math.round(json.camera_position[0] * factor);
+                json.camera_position[1] = Math.round(json.camera_position[1] * factor);
             }
         }
         jsonExportData = { name: window.uploadedAnimationJSON.name, content: JSON.stringify(json, null, "\t") };
@@ -257,7 +269,7 @@ async function exportarActual() {
             let json = JSON.parse(JSON.stringify(window.uploadedAnimationJSON.obj));
             if (isOptimized) {
                 let factor = window.lastResizeFactor;
-                json.scale = Number(((json.scale || 1) / factor).toFixed(2));
+                json.scale = Number(((json.scale || 1) / factor).toFixed(4));
                 if (json.animations) {
                     json.animations.forEach(anim => {
                         if (anim.offsets) {
@@ -265,6 +277,14 @@ async function exportarActual() {
                             anim.offsets[1] = Math.round(anim.offsets[1] * factor);
                         }
                     });
+                }
+                if (json.position) {
+                    json.position[0] = Math.round(json.position[0] * factor);
+                    json.position[1] = Math.round(json.position[1] * factor);
+                }
+                if (json.camera_position) {
+                    json.camera_position[0] = Math.round(json.camera_position[0] * factor);
+                    json.camera_position[1] = Math.round(json.camera_position[1] * factor);
                 }
             }
             jsonExportData = { name: window.uploadedAnimationJSON.name, content: JSON.stringify(json, null, "\t") };

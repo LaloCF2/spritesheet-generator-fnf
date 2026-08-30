@@ -264,7 +264,10 @@ async function ejecutarAtlasBaker() {
     let baseName = document.getElementById('txtAtlasExportName').value.trim() || atlasPngFileName.replace('.png', '');
     let finalPngName = baseName + '.png';
 
-    let xml = '<?xml version="1.0" encoding="utf-8"?>\n<TextureAtlas imagePath="\n<!-- Spritesheet Generator FNF LaloCF -->\t\n<!-- https://lalocf2.github.io/spritesheet-generator-fnf/ -->\t' + finalPngName + '">\n';
+    let xml = '<?xml version="1.0" encoding="utf-8"?>\n';
+    xml += '<TextureAtlas imagePath="' + finalPngName + '">\n';
+    xml += '<!-- Spritesheet Generator FNF LaloCF -->\t\n';
+    xml += '<!-- https://lalocf2.github.io/spritesheet-generator-fnf/ -->\t\n';
     let psychJson = { animations: [], image: baseName, position: [0, 0], healthicon: "face", flip_x: false, healthbar_colors: [161, 161, 161], camera_position: [0, 0], sing_duration: 4, scale: 1 };
 
     let psychAnimsAdded = {};

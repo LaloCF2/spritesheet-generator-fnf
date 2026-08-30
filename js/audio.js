@@ -77,7 +77,7 @@ function detectBPM(file) {
 }
 
 async function ejecutarCompresionAudio() {
-    if (!oggFileOriginal) return alert("Sube un archivo OGG primero.");
+    if (!oggFileOriginal) return alert("Sube un archivo de audio primero (.OGG o .MP3).");
 
     let radios = document.getElementsByName('oggQuality');
     let bitrate = '128k';
@@ -89,7 +89,7 @@ async function ejecutarCompresionAudio() {
 
     try {
         const { FFmpeg } = window.FFmpeg;
-        const { fetchFile } = window.FFmpegUtil;
+        const { fetchFile, toBlobURL } = window.FFmpegUtil;
 
         if (!window.ffmpegInstance) {
             window.ffmpegInstance = new FFmpeg();
@@ -105,17 +105,22 @@ async function ejecutarCompresionAudio() {
                 }
             });
 
+            const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
             await window.ffmpegInstance.load({
-                coreURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
-                wasmURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm'
+                coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
             });
         }
 
         showLoader("COMPRIMIENDO AUDIO", "Preparando tu archivo...");
 
-        await window.ffmpegInstance.writeFile('input.ogg', await fetchFile(oggFileOriginal));
+        // Detectar extensión de entrada
+        let ext = oggFileName.split('.').pop().toLowerCase();
+        let inputName = 'input.' + ext;
 
-        await window.ffmpegInstance.exec(['-i', 'input.ogg', '-c:a', 'libvorbis', '-b:a', bitrate, 'output.ogg']);
+        await window.ffmpegInstance.writeFile(inputName, await fetchFile(oggFileOriginal));
+
+        await window.ffmpegInstance.exec(['-i', inputName, '-c:a', 'libvorbis', '-b:a', bitrate, 'output.ogg']);
 
         const data = await window.ffmpegInstance.readFile('output.ogg');
         const blob = new Blob([data.buffer], { type: 'audio/ogg' });
