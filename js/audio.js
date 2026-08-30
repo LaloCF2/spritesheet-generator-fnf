@@ -6,9 +6,12 @@ var oggFileOriginal = null;
 var oggFileName = "audio.ogg";
 var oggOriginalSize = 0;
 
-document.getElementById('audioUpload').addEventListener('change', (e) => {
+document.getElementById('audioUpload').addEventListener('change', async (e) => {
     let file = e.target.files[0];
     if (!file) return;
+
+    mostrarCargaGlobal("Importando archivo de audio...");
+    await pensar(300);
 
     oggFileOriginal = file;
     oggFileName = file.name;
@@ -23,6 +26,9 @@ document.getElementById('audioUpload').addEventListener('change', (e) => {
 
     detectBPM(file);
     if (typeof window.autoSaveHistory === 'function') window.autoSaveHistory();
+    
+    await pensar(500);
+    ocultarCargaGlobal();
 });
 
 function detectBPM(file) {

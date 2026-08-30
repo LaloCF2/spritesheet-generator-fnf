@@ -309,3 +309,100 @@ window.addEventListener('drop', (e) => {
         });
     }
 });
+
+// ==========================================
+// LAZY LOADING: IMÁGENES CON SPINNER ADAPTATIVO
+// ==========================================
+(function initImageLazyLoad() {
+    // Estilo del spinner inline para imágenes
+    const spinnerCSS = document.createElement('style');
+    spinnerCSS.textContent = `
+        .img-lazy-wrap {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .img-lazy-wrap img {
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .img-lazy-wrap img.img-loaded {
+            opacity: 1;
+        }
+        .img-mini-spinner {
+            position: absolute;
+            border: 2px solid rgba(255,255,255,0.15);
+            border-top-color: var(--accent, #00e5ff);
+            border-radius: 50%;
+            animation: imgSpin 0.7s linear infinite;
+        }
+        @keyframes imgSpin {
+            to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(spinnerCSS);
+
+    function wrapImage(img) {
+        if (img.closest('.img-lazy-wrap')) return; // Ya envuelto
+        if (img.closest('#globalLoader')) return;  // No tocar el loader
+        if (img.closest('.timeline-item')) return;  // No tocar los canvas
+        if (img.naturalWidth > 0 && img.complete) {
+            img.classList.add('img-loaded');
+            return;
+        }
+
+        const wrap = document.createElement('span');
+        wrap.className = 'img-lazy-wrap';
+        
+        const spinner = document.createElement('span');
+        spinner.className = 'img-mini-spinner';
+
+        // Adaptar tamaño del spinner a la imagen
+        let imgW = img.width || img.offsetWidth || 20;
+        let imgH = img.height || img.offsetHeight || 20;
+        let spinSize = Math.max(10, Math.min(imgW, imgH, 24));
+        spinner.style.width = spinSize + 'px';
+        spinner.style.height = spinSize + 'px';
+
+        img.parentNode.insertBefore(wrap, img);
+        wrap.appendChild(spinner);
+        wrap.appendChild(img);
+
+        img.addEventListener('load', function onLoad() {
+            img.classList.add('img-loaded');
+            if (spinner.parentNode) spinner.remove();
+        }, { once: true });
+
+        img.addEventListener('error', function onErr() {
+            if (spinner.parentNode) spinner.remove();
+            img.style.opacity = '0.3';
+        }, { once: true });
+
+        // Forzar recarga si la imagen ya estaba cacheada
+        if (img.complete && img.naturalWidth > 0) {
+            img.classList.add('img-loaded');
+            spinner.remove();
+        }
+    }
+
+    // Envolver las imágenes existentes al cargar
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('img:not(.img-loaded)').forEach(wrapImage);
+    });
+
+    // Observer para imágenes que se agregan dinámicamente
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach(m => {
+            m.addedNodes.forEach(node => {
+                if (node.nodeType === 1) {
+                    if (node.tagName === 'IMG') wrapImage(node);
+                    else if (node.querySelectorAll) {
+                        node.querySelectorAll('img:not(.img-loaded)').forEach(wrapImage);
+                    }
+                }
+            });
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+})();

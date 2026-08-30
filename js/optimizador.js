@@ -121,20 +121,35 @@ window.resolverModalJsonWarning = function(continuar) {
     if (jsonWarningResolve) jsonWarningResolve(continuar);
 };
 
-document.getElementById('jsonUpdateUpload').addEventListener('change', (e) => {
+document.getElementById('jsonUpdateUpload').addEventListener('change', async (e) => {
     let file = e.target.files[0];
     if (!file) {
         window.uploadedAnimationJSON = null;
         document.getElementById('lblJsonUploaded').style.display = 'none';
         return;
     }
+    mostrarCargaGlobal("Analizando archivo .JSON...");
+    await pensar(300);
     let reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
         try {
             let json = JSON.parse(ev.target.result);
             window.uploadedAnimationJSON = { name: file.name, obj: json };
+            
+            // Mostrar resumen del JSON
+            let animCount = (json.animations || []).length;
+            let scaleOrig = json.scale || 1;
+            let posStr = json.position ? `[${json.position[0]}, ${json.position[1]}]` : 'N/A';
+            
             document.getElementById('lblJsonUploaded').style.display = 'inline-block';
+            document.getElementById('lblJsonUploaded').innerHTML = 
+                `<img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" class="icon-sm"> ` +
+                `<b>${file.name}</b> | Anims: ${animCount} | Scale: ${scaleOrig} | Pos: ${posStr}`;
+            
+            await pensar(400);
+            ocultarCargaGlobal();
         } catch(err) {
+            ocultarCargaGlobal();
             alert("❌ Archivo JSON inválido.");
             window.uploadedAnimationJSON = null;
             document.getElementById('lblJsonUploaded').style.display = 'none';
@@ -161,27 +176,15 @@ async function repackAndExport() {
         let json = JSON.parse(JSON.stringify(window.uploadedAnimationJSON.obj));
         if (isOptimized) {
             let factor = window.lastResizeFactor;
-            // Escalar scale inversamente para mantener tamaño visual en Psych Engine
+            // ============================================
+            // PSYCH ENGINE: Solo se modifica SCALE
+            // position y camera_position son coordenadas del
+            // escenario (stage), NO de los píxeles del sprite.
+            // offsets son en espacio de pantalla, y como scale
+            // compensa la reducción, se quedan igual.
+            // ============================================
             json.scale = Number(((json.scale || 1) / factor).toFixed(4));
-            // Ajustar offsets de cada animación
-            if (json.animations) {
-                json.animations.forEach(anim => {
-                    if (anim.offsets) {
-                        anim.offsets[0] = Math.round(anim.offsets[0] * factor);
-                        anim.offsets[1] = Math.round(anim.offsets[1] * factor);
-                    }
-                });
-            }
-            // Ajustar posición del personaje en el escenario
-            if (json.position) {
-                json.position[0] = Math.round(json.position[0] * factor);
-                json.position[1] = Math.round(json.position[1] * factor);
-            }
-            // Ajustar posición de la cámara
-            if (json.camera_position) {
-                json.camera_position[0] = Math.round(json.camera_position[0] * factor);
-                json.camera_position[1] = Math.round(json.camera_position[1] * factor);
-            }
+            // position, camera_position, offsets: NO SE TOCAN
         }
         jsonExportData = { name: window.uploadedAnimationJSON.name, content: JSON.stringify(json, null, "\t") };
     }
@@ -269,23 +272,8 @@ async function exportarActual() {
             let json = JSON.parse(JSON.stringify(window.uploadedAnimationJSON.obj));
             if (isOptimized) {
                 let factor = window.lastResizeFactor;
+                // Solo modificar scale (inverso). position, camera_position y offsets NO se tocan.
                 json.scale = Number(((json.scale || 1) / factor).toFixed(4));
-                if (json.animations) {
-                    json.animations.forEach(anim => {
-                        if (anim.offsets) {
-                            anim.offsets[0] = Math.round(anim.offsets[0] * factor);
-                            anim.offsets[1] = Math.round(anim.offsets[1] * factor);
-                        }
-                    });
-                }
-                if (json.position) {
-                    json.position[0] = Math.round(json.position[0] * factor);
-                    json.position[1] = Math.round(json.position[1] * factor);
-                }
-                if (json.camera_position) {
-                    json.camera_position[0] = Math.round(json.camera_position[0] * factor);
-                    json.camera_position[1] = Math.round(json.camera_position[1] * factor);
-                }
             }
             jsonExportData = { name: window.uploadedAnimationJSON.name, content: JSON.stringify(json, null, "\t") };
         }
