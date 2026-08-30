@@ -1,3 +1,25 @@
+/* ==========================================
+   RESET UNIVERSAL
+========================================== */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* ==========================================
    FONDO ANIMADO (BLOBS)
 ========================================== */
 .glass-bg {
