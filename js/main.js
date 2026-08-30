@@ -170,6 +170,7 @@ function showLoader(title, text) { document.getElementById('iaTitle').textConten
 
 function loadMainImage(file, callback) {
     if (!file) return; showLoader("CARGANDO...", "Leyendo imagen PNG..."); nombreArchivo = file.name;
+    window.lastResizeFactor = 1.0;
     const reader = new FileReader();
     reader.onload = (event) => {
         imgOriginal = new Image();

@@ -99,6 +99,9 @@ document.getElementById('btnFpsDown').addEventListener('click', () => { if (fpsA
 
 async function repackAndExport() {
     if (spritesDetectados.length === 0) return alert("No hay frames para empaquetar.");
+    
+    let jsonUpdate = await promptForJSONUpdate(window.lastResizeFactor);
+    
     showLoader("OPTIMIZADOR", "Comprimiendo .XML + .PNG en .ZIP..."); await pensar(500);
 
     let uniqueFrames = []; let duplicatesMap = new Map(); let hashMap = new Map();
@@ -121,7 +124,12 @@ async function repackAndExport() {
     let packCanvas = document.createElement('canvas'); packCanvas.width = actualMaxWidth; packCanvas.height = totalHeight; let pCtx = packCanvas.getContext('2d');
     for (let s of uniqueFrames) { pCtx.drawImage(imgOriginal, s.x, s.y, s.w, s.h, s.packX, s.packY, s.w, s.h); }
 
-    let nombreZipPNG = nombreArchivo.replace(/\.[^/.]+$/, ".png");
+    let baseName = nombreArchivo.replace(/\.[^/.]+$/, "");
+    let isOptimized = window.lastResizeFactor && window.lastResizeFactor < 1.0;
+    let finalBaseName = isOptimized ? baseName + "_opt" : baseName;
+
+    let nombreZipPNG = finalBaseName + ".png";
+    let nombreZipXML = finalBaseName + ".xml";
 
     let xmlLines = [];
     xmlLines.push('<?xml version="1.0" encoding="utf-8"?>');
@@ -142,17 +150,20 @@ async function repackAndExport() {
     packCanvas.toBlob(function (blobPNG) {
         let zip = new JSZip();
         zip.file(nombreZipPNG, blobPNG);
-        zip.file(nombreArchivo.replace(/\.[^/.]+$/, ".xml"), xml);
+        zip.file(nombreZipXML, xml);
+        if (jsonUpdate) {
+            zip.file(jsonUpdate.name, jsonUpdate.content);
+        }
         zip.generateAsync({ type: "blob" }).then(function (content) {
             let aZip = document.createElement('a'); aZip.href = URL.createObjectURL(content);
-            aZip.download = nombreArchivo.replace(/\.[^/.]+$/, "_optimized.zip"); aZip.click();
+            aZip.download = finalBaseName + ".zip"; aZip.click();
             document.getElementById('iaLoader').style.display = 'none';
             alert(`¡Éxito! Imagen comprimida.\nSe eliminaron ${dupCount} frames duplicados.\nTu archivo ZIP se ha descargado.`);
         });
     });
 }
 
-function exportarActual() {
+async function exportarActual() {
     if (appMode === 'PSYCH') {
         let charData = { animations: psychAnimations, no_antialiasing: !document.getElementById('p_antialias').checked, image: document.getElementById('p_image').value, position: [parseInt(document.getElementById('p_posX').value) || 0, parseInt(document.getElementById('p_posY').value) || 0], healthicon: document.getElementById('p_icon').value, flip_x: document.getElementById('p_flip').checked, healthbar_colors: hexToRgb(document.getElementById('p_color').value), camera_position: [parseInt(document.getElementById('p_camX').value) || 0, parseInt(document.getElementById('p_camY').value) || 0], sing_duration: parseFloat(document.getElementById('p_sing').value) || 4, scale: parseFloat(document.getElementById('p_scale').value) || 1 };
         const blob = new Blob([JSON.stringify(charData, null, "\t")], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -160,9 +171,17 @@ function exportarActual() {
     } else {
         if (spritesDetectados.length === 0) return alert("❌ No hay frames para exportar.");
 
+        let jsonUpdate = await promptForJSONUpdate(window.lastResizeFactor);
+
+        let baseName = nombreArchivo.replace(/\.[^/.]+$/, "");
+        let isOptimized = window.lastResizeFactor && window.lastResizeFactor < 1.0;
+        let finalBaseName = isOptimized ? baseName + "_opt" : baseName;
+        
+        let nombrePNG = finalBaseName + ".png";
+
         let xmlLines = [];
         xmlLines.push('<?xml version="1.0" encoding="utf-8"?>');
-        xmlLines.push('<TextureAtlas imagePath="' + nombreArchivo + '">');
+        xmlLines.push('<TextureAtlas imagePath="' + nombrePNG + '">');
         xmlLines.push('<!-- Spritesheet Generator FNF LaloCF -->\t');
         xmlLines.push('<!-- https://lalocf2.github.io/spritesheet-generator-fnf/ -->\t');
 
@@ -176,7 +195,12 @@ function exportarActual() {
         let xml = xmlLines.join('\r\n');
 
         const blob = new Blob([xml], { type: 'text/xml' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-        let baseName = nombreArchivo.replace(/\.[^/.]+$/, ""); a.download = baseName + ".xml"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        a.download = finalBaseName + ".xml"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
+        if (jsonUpdate) {
+            const blobJSON = new Blob([jsonUpdate.content], { type: 'application/json' }); const aJ = document.createElement('a'); aJ.href = URL.createObjectURL(blobJSON);
+            aJ.download = jsonUpdate.name; document.body.appendChild(aJ); aJ.click(); document.body.removeChild(aJ);
+        }
     }
 }
 
@@ -227,6 +251,8 @@ async function aplicarResizeOptimizador() {
 
     if (factor >= 1.0) return alert("❌ El factor debe ser menor para reducir el tamaño.");
 
+    window.lastResizeFactor = factor;
+
     showLoader("REESCALANDO", "Redimensionando imagen y ajustando XML (esto puede tardar unos segundos)...");
     await pensar(100);
 
@@ -269,4 +295,48 @@ async function aplicarResizeOptimizador() {
         if (typeof window.autoSaveHistory === 'function') window.autoSaveHistory();
     };
     newImg.src = newImgSrc;
+}
+
+function promptForJSONUpdate(factor) {
+    return new Promise((resolve) => {
+        if (!factor || factor >= 1.0) {
+            return resolve(null);
+        }
+        if (!confirm("Has modificado la resolución de la imagen.\n\n¿Deseas subir el archivo .json de tu personaje para que el generador ajuste automáticamente su escala y recortes y no pierda su lugar en el juego?")) {
+            return resolve(null);
+        }
+        
+        let input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+            let file = e.target.files[0];
+            if (!file) return resolve(null);
+            let reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    let json = JSON.parse(ev.target.result);
+                    // Modificar scale (inverso) para mantener tamaño visual en Psych Engine
+                    json.scale = Number(((json.scale || 1) / factor).toFixed(2));
+                    // Modificar anim offsets (se reducen en la misma proporción que la imagen)
+                    if (json.animations) {
+                        json.animations.forEach(anim => {
+                            if (anim.offsets) {
+                                anim.offsets[0] = Math.round(anim.offsets[0] * factor);
+                                anim.offsets[1] = Math.round(anim.offsets[1] * factor);
+                            }
+                        });
+                    }
+                    
+                    let newName = file.name;
+                    resolve({ name: newName, content: JSON.stringify(json, null, "\t") });
+                } catch(err) {
+                    alert("❌ Error al leer el archivo JSON. Se exportará sin modificar.");
+                    resolve(null);
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    });
 }
