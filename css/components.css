@@ -568,36 +568,14 @@ body {
 
 /* 1. Posición en PC y Tablets (Pantallas grandes) */
 @media (min-width: 769px) {
-    .fab-wrap-theme {
-        bottom: 580px;
-        left: -165px
-    }
-
-    .fab-wrap-history {
-        bottom: 30px;
-        right: 16px;
-    }
-
-    .fab-wrap-dark {
-        bottom: 580px;
-        right: 10px;
-    }
+    .fab-wrap-history { bottom: 30px; right: 20px; }
+    .fab-wrap-dark { bottom: 100px; right: 20px; }
+    .fab-wrap-theme { bottom: 170px; right: 20px; }
 }
 
 /* 2. Posición en Celulares (Pantallas pequeñas) */
 @media (max-width: 768px) {
-    .fab-wrap-theme {
-        bottom: 590px;
-        left: -146px;
-    }
-
-    .fab-wrap-history {
-        bottom: 30px;
-        right: 16px;
-    }
-
-    .fab-wrap-dark {
-        bottom: 590px;
-        right: 10px;
-    }
+    .fab-wrap-history { bottom: 20px; right: 15px; }
+    .fab-wrap-dark { bottom: 85px; right: 15px; }
+    .fab-wrap-theme { bottom: 150px; right: 15px; }
 }
