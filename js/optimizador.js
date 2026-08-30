@@ -2,34 +2,50 @@
 // SECUENCIADOR Y EXPORTACIÓN ZIP
 // ==========================================
 
-function renderTimelineSecuenciador() {
+let renderTimelineAbortCtrl = null;
+
+async function renderTimelineSecuenciador() {
+    if (renderTimelineAbortCtrl) renderTimelineAbortCtrl.abort();
+    renderTimelineAbortCtrl = new AbortController();
+    let signal = renderTimelineAbortCtrl.signal;
+
     timelineContainer.innerHTML = '';
-    spritesDetectados.forEach((s, gIdx) => {
-        let item = document.createElement('div'); item.className = `timeline-item ${gIdx === indexEditando ? 'active' : ''}`;
+    const chunk_size = 15;
 
-        let meta = document.createElement('div'); meta.className = 'timeline-item-meta';
-        let chk = document.createElement('input'); chk.type = 'checkbox'; chk.className = 'frame-checkbox'; chk.setAttribute('data-index', gIdx); chk.onclick = (e) => e.stopPropagation();
+    for (let i = 0; i < spritesDetectados.length; i += chunk_size) {
+        if (signal.aborted) return;
+        
+        for (let j = i; j < i + chunk_size && j < spritesDetectados.length; j++) {
+            let gIdx = j;
+            let s = spritesDetectados[gIdx];
 
-        let thumb = document.createElement('canvas'); thumb.width = s.w; thumb.height = s.h;
-        let tCtx = thumb.getContext('2d'); tCtx.drawImage(imgOriginal, s.x, s.y, s.w, s.h, 0, 0, s.w, s.h);
-        let nameSpan = document.createElement('span'); nameSpan.className = 'timeline-item-name'; nameSpan.textContent = s.name;
-        meta.appendChild(chk); meta.appendChild(thumb); meta.appendChild(nameSpan);
+            let item = document.createElement('div'); item.className = `timeline-item ${gIdx === indexEditando ? 'active' : ''}`;
 
-        let actions = document.createElement('div'); actions.className = 'timeline-actions';
+            let meta = document.createElement('div'); meta.className = 'timeline-item-meta';
+            let chk = document.createElement('input'); chk.type = 'checkbox'; chk.className = 'frame-checkbox'; chk.setAttribute('data-index', gIdx); chk.onclick = (e) => e.stopPropagation();
 
-        let btnUp = document.createElement('button'); btnUp.className = 'btn-nav'; btnUp.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/128/992/992703.png" class="icon-sm" alt="Arriba">'; btnUp.onclick = (e) => { e.stopPropagation(); moverFrame(gIdx, -1); };
-        let btnDown = document.createElement('button'); btnDown.className = 'btn-nav'; btnDown.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/128/3519/3519316.png" class="icon-sm" alt="Abajo">'; btnDown.onclick = (e) => { e.stopPropagation(); moverFrame(gIdx, 1); };
-        let btnDup = document.createElement('button'); btnDup.className = 'btn-dup'; btnDup.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/512/1621/1621635.png" class="icon-sm" alt="Duplicar">'; btnDup.title = "Duplicar Frame"; btnDup.onclick = (e) => { e.stopPropagation(); duplicateFrame(gIdx); };
-        let btnDel = document.createElement('button'); btnDel.className = 'btn-del'; btnDel.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/512/484/484611.png" class="icon-sm" alt="Eliminar">'; btnDel.title = "Eliminar Frame"; btnDel.onclick = (e) => { e.stopPropagation(); deleteFrame(gIdx); };
+            let thumb = document.createElement('canvas'); thumb.width = s.w; thumb.height = s.h;
+            let tCtx = thumb.getContext('2d'); tCtx.drawImage(imgOriginal, s.x, s.y, s.w, s.h, 0, 0, s.w, s.h);
+            let nameSpan = document.createElement('span'); nameSpan.className = 'timeline-item-name'; nameSpan.textContent = s.name;
+            meta.appendChild(chk); meta.appendChild(thumb); meta.appendChild(nameSpan);
 
-        if (gIdx === 0) btnUp.disabled = true; if (gIdx === spritesDetectados.length - 1) btnDown.disabled = true;
+            let actions = document.createElement('div'); actions.className = 'timeline-actions';
 
-        actions.appendChild(btnUp); actions.appendChild(btnDown); actions.appendChild(btnDup); actions.appendChild(btnDel);
-        item.appendChild(meta); item.appendChild(actions);
+            let btnUp = document.createElement('button'); btnUp.className = 'btn-nav'; btnUp.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/128/992/992703.png" class="icon-sm" alt="Arriba">'; btnUp.onclick = (e) => { e.stopPropagation(); moverFrame(gIdx, -1); };
+            let btnDown = document.createElement('button'); btnDown.className = 'btn-nav'; btnDown.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/128/3519/3519316.png" class="icon-sm" alt="Abajo">'; btnDown.onclick = (e) => { e.stopPropagation(); moverFrame(gIdx, 1); };
+            let btnDup = document.createElement('button'); btnDup.className = 'btn-dup'; btnDup.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/512/1621/1621635.png" class="icon-sm" alt="Duplicar">'; btnDup.title = "Duplicar Frame"; btnDup.onclick = (e) => { e.stopPropagation(); duplicateFrame(gIdx); };
+            let btnDel = document.createElement('button'); btnDel.className = 'btn-del'; btnDel.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/512/484/484611.png" class="icon-sm" alt="Eliminar">'; btnDel.title = "Eliminar Frame"; btnDel.onclick = (e) => { e.stopPropagation(); deleteFrame(gIdx); };
 
-        item.addEventListener('click', () => { seleccionarFrameAfinador(gIdx); openWindow('win-afinador'); });
-        timelineContainer.appendChild(item);
-    });
+            if (gIdx === 0) btnUp.disabled = true; if (gIdx === spritesDetectados.length - 1) btnDown.disabled = true;
+
+            actions.appendChild(btnUp); actions.appendChild(btnDown); actions.appendChild(btnDup); actions.appendChild(btnDel);
+            item.appendChild(meta); item.appendChild(actions);
+
+            item.addEventListener('click', () => { seleccionarFrameAfinador(gIdx); openWindow('win-afinador'); });
+            timelineContainer.appendChild(item);
+        }
+        await pensar(1);
+    }
 }
 
 function moverFrame(idx, dir) {
@@ -97,10 +113,66 @@ document.getElementById('btnPlayPause').addEventListener('click', () => { playAc
 document.getElementById('btnFpsUp').addEventListener('click', () => { if (fpsActual < 60) { fpsActual++; document.getElementById('txtFpsDisplay').textContent = `${fpsActual} FPS`; updatePlayerInterval(); } });
 document.getElementById('btnFpsDown').addEventListener('click', () => { if (fpsActual > 1) { fpsActual--; document.getElementById('txtFpsDisplay').textContent = `${fpsActual} FPS`; updatePlayerInterval(); } });
 
+window.uploadedAnimationJSON = null;
+let jsonWarningResolve = null;
+
+window.resolverModalJsonWarning = function(continuar) {
+    document.getElementById('modalJsonWarning').style.display = 'none';
+    if (jsonWarningResolve) jsonWarningResolve(continuar);
+};
+
+document.getElementById('jsonUpdateUpload').addEventListener('change', (e) => {
+    let file = e.target.files[0];
+    if (!file) {
+        window.uploadedAnimationJSON = null;
+        document.getElementById('lblJsonUploaded').style.display = 'none';
+        return;
+    }
+    let reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            let json = JSON.parse(ev.target.result);
+            window.uploadedAnimationJSON = { name: file.name, obj: json };
+            document.getElementById('lblJsonUploaded').style.display = 'inline-block';
+        } catch(err) {
+            alert("❌ Archivo JSON inválido.");
+            window.uploadedAnimationJSON = null;
+            document.getElementById('lblJsonUploaded').style.display = 'none';
+        }
+    };
+    reader.readAsText(file);
+});
+
 async function repackAndExport() {
     if (spritesDetectados.length === 0) return alert("No hay frames para empaquetar.");
     
-    let jsonUpdate = await promptForJSONUpdate(window.lastResizeFactor);
+    let isOptimized = window.lastResizeFactor && window.lastResizeFactor < 1.0;
+    
+    if (isOptimized && !window.uploadedAnimationJSON) {
+        let continuar = await new Promise((resolve) => {
+            jsonWarningResolve = resolve;
+            document.getElementById('modalJsonWarning').style.display = 'flex';
+        });
+        if (!continuar) return;
+    }
+
+    let jsonExportData = null;
+    if (window.uploadedAnimationJSON) {
+        let json = JSON.parse(JSON.stringify(window.uploadedAnimationJSON.obj));
+        if (isOptimized) {
+            let factor = window.lastResizeFactor;
+            json.scale = Number(((json.scale || 1) / factor).toFixed(2));
+            if (json.animations) {
+                json.animations.forEach(anim => {
+                    if (anim.offsets) {
+                        anim.offsets[0] = Math.round(anim.offsets[0] * factor);
+                        anim.offsets[1] = Math.round(anim.offsets[1] * factor);
+                    }
+                });
+            }
+        }
+        jsonExportData = { name: window.uploadedAnimationJSON.name, content: JSON.stringify(json, null, "\t") };
+    }
     
     showLoader("OPTIMIZADOR", "Comprimiendo .XML + .PNG en .ZIP..."); await pensar(500);
 
@@ -125,7 +197,6 @@ async function repackAndExport() {
     for (let s of uniqueFrames) { pCtx.drawImage(imgOriginal, s.x, s.y, s.w, s.h, s.packX, s.packY, s.w, s.h); }
 
     let baseName = nombreArchivo.replace(/\.[^/.]+$/, "");
-    let isOptimized = window.lastResizeFactor && window.lastResizeFactor < 1.0;
     let finalBaseName = isOptimized ? baseName + "_opt" : baseName;
 
     let nombreZipPNG = finalBaseName + ".png";
@@ -151,8 +222,8 @@ async function repackAndExport() {
         let zip = new JSZip();
         zip.file(nombreZipPNG, blobPNG);
         zip.file(nombreZipXML, xml);
-        if (jsonUpdate) {
-            zip.file(jsonUpdate.name, jsonUpdate.content);
+        if (jsonExportData) {
+            zip.file(jsonExportData.name, jsonExportData.content);
         }
         zip.generateAsync({ type: "blob" }).then(function (content) {
             let aZip = document.createElement('a'); aZip.href = URL.createObjectURL(content);
@@ -171,10 +242,35 @@ async function exportarActual() {
     } else {
         if (spritesDetectados.length === 0) return alert("❌ No hay frames para exportar.");
 
-        let jsonUpdate = await promptForJSONUpdate(window.lastResizeFactor);
+        let isOptimized = window.lastResizeFactor && window.lastResizeFactor < 1.0;
+        
+        if (isOptimized && !window.uploadedAnimationJSON) {
+            let continuar = await new Promise((resolve) => {
+                jsonWarningResolve = resolve;
+                document.getElementById('modalJsonWarning').style.display = 'flex';
+            });
+            if (!continuar) return;
+        }
+
+        let jsonExportData = null;
+        if (window.uploadedAnimationJSON) {
+            let json = JSON.parse(JSON.stringify(window.uploadedAnimationJSON.obj));
+            if (isOptimized) {
+                let factor = window.lastResizeFactor;
+                json.scale = Number(((json.scale || 1) / factor).toFixed(2));
+                if (json.animations) {
+                    json.animations.forEach(anim => {
+                        if (anim.offsets) {
+                            anim.offsets[0] = Math.round(anim.offsets[0] * factor);
+                            anim.offsets[1] = Math.round(anim.offsets[1] * factor);
+                        }
+                    });
+                }
+            }
+            jsonExportData = { name: window.uploadedAnimationJSON.name, content: JSON.stringify(json, null, "\t") };
+        }
 
         let baseName = nombreArchivo.replace(/\.[^/.]+$/, "");
-        let isOptimized = window.lastResizeFactor && window.lastResizeFactor < 1.0;
         let finalBaseName = isOptimized ? baseName + "_opt" : baseName;
         
         let nombrePNG = finalBaseName + ".png";
@@ -197,9 +293,9 @@ async function exportarActual() {
         const blob = new Blob([xml], { type: 'text/xml' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
         a.download = finalBaseName + ".xml"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
 
-        if (jsonUpdate) {
-            const blobJSON = new Blob([jsonUpdate.content], { type: 'application/json' }); const aJ = document.createElement('a'); aJ.href = URL.createObjectURL(blobJSON);
-            aJ.download = jsonUpdate.name; document.body.appendChild(aJ); aJ.click(); document.body.removeChild(aJ);
+        if (jsonExportData) {
+            const blobJSON = new Blob([jsonExportData.content], { type: 'application/json' }); const aJ = document.createElement('a'); aJ.href = URL.createObjectURL(blobJSON);
+            aJ.download = jsonExportData.name; document.body.appendChild(aJ); aJ.click(); document.body.removeChild(aJ);
         }
     }
 }
@@ -295,48 +391,4 @@ async function aplicarResizeOptimizador() {
         if (typeof window.autoSaveHistory === 'function') window.autoSaveHistory();
     };
     newImg.src = newImgSrc;
-}
-
-function promptForJSONUpdate(factor) {
-    return new Promise((resolve) => {
-        if (!factor || factor >= 1.0) {
-            return resolve(null);
-        }
-        if (!confirm("Has modificado la resolución de la imagen.\n\n¿Deseas subir el archivo .json de tu personaje para que el generador ajuste automáticamente su escala y recortes y no pierda su lugar en el juego?")) {
-            return resolve(null);
-        }
-        
-        let input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.onchange = (e) => {
-            let file = e.target.files[0];
-            if (!file) return resolve(null);
-            let reader = new FileReader();
-            reader.onload = (ev) => {
-                try {
-                    let json = JSON.parse(ev.target.result);
-                    // Modificar scale (inverso) para mantener tamaño visual en Psych Engine
-                    json.scale = Number(((json.scale || 1) / factor).toFixed(2));
-                    // Modificar anim offsets (se reducen en la misma proporción que la imagen)
-                    if (json.animations) {
-                        json.animations.forEach(anim => {
-                            if (anim.offsets) {
-                                anim.offsets[0] = Math.round(anim.offsets[0] * factor);
-                                anim.offsets[1] = Math.round(anim.offsets[1] * factor);
-                            }
-                        });
-                    }
-                    
-                    let newName = file.name;
-                    resolve({ name: newName, content: JSON.stringify(json, null, "\t") });
-                } catch(err) {
-                    alert("❌ Error al leer el archivo JSON. Se exportará sin modificar.");
-                    resolve(null);
-                }
-            };
-            reader.readAsText(file);
-        };
-        input.click();
-    });
 }
