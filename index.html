@@ -183,7 +183,7 @@
             </div>
 
             <div class="home-footer">
-                &copy; LaloCF 2026 | Versión 1.2.1
+                &copy; LaloCF 2026 | Versión 1.2
             </div>
         </div>
 
@@ -297,6 +297,23 @@
                 <button class="btn-pildora" id="btnAplicarBatch"><img
                         src="https://cdn-icons-png.flaticon.com/128/16161/16161431.png" class="icon" alt="Renombrar">
                     Renombrar Marcados</button>
+            </div>
+
+            <div class="resize-bar inner-glass-box" style="display:flex; gap:10px; padding:10px; margin-bottom: 10px; align-items:center;">
+                <span id="lblResizeCurrent" style="color:var(--text); font-size:0.9rem; font-weight:bold; min-width: 180px;"><img src="https://cdn-icons-png.flaticon.com/128/3114/3114883.png" class="icon-sm" alt="Size"> Tamaño: -- x --</span>
+                
+                <select id="selResizeFactor" class="inner-glass-box" style="flex:1;" onchange="toggleCustomResizeInput()">
+                    <option value="recommend">Recomendado (Automático)</option>
+                    <option value="0.9">Reducir al 90%</option>
+                    <option value="0.75">Reducir al 75%</option>
+                    <option value="0.6">Reducir al 60%</option>
+                    <option value="0.5">Reducir a la mitad (50%)</option>
+                    <option value="0.4">Reducir al 40%</option>
+                    <option value="custom">Personalizado...</option>
+                </select>
+                <input type="number" id="inpResizeCustom" class="inner-glass-box" style="display:none; width: 70px;" placeholder="%" min="1" max="100">
+
+                <button class="btn-pildora" style="background:var(--accent-pink); color:white; border:none;" onclick="aplicarResizeOptimizador()"><img src="https://cdn-icons-png.flaticon.com/128/8208/8208316.png" class="icon" style="filter: brightness(0) invert(1);" alt="Resize"> Optimizar Tamaño</button>
             </div>
 
             <div class="timeline-panel" id="timelineContainer"></div>
