@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // COMPRESOR DE AUDIO OGG (VÍA FFMPEG.WASM)
 // ==========================================
 
@@ -6,7 +6,7 @@ var oggFileOriginal = null;
 var oggFileName = "audio.ogg";
 var oggOriginalSize = 0;
 
-document.getElementById('audioUpload').addEventListener('change', async (e) => {
+document.getElementById('audioUpload')?.addEventListener('change', async (e) => {
     let file = e.target.files[0];
     if (!file) return;
 
@@ -26,7 +26,7 @@ document.getElementById('audioUpload').addEventListener('change', async (e) => {
 
     detectBPM(file);
     if (typeof window.autoSaveHistory === 'function') window.autoSaveHistory();
-    
+
     await pensar(500);
     ocultarCargaGlobal();
 });
@@ -120,7 +120,6 @@ async function ejecutarCompresionAudio() {
 
         showLoader("COMPRIMIENDO AUDIO", "Preparando tu archivo...");
 
-        // Detectar extensión de entrada
         let ext = oggFileName.split('.').pop().toLowerCase();
         let inputName = 'input.' + ext;
 

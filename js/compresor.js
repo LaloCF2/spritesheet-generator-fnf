@@ -1,11 +1,11 @@
-// ==========================================
+﻿// ==========================================
 // OPTIMIZADOR PESO PNG
 // ==========================================
 
 let compNombreArchivo = "sprite_optimizado.png";
 let compOriginalSize = 0;
 
-document.getElementById('imgCompresorUpload').addEventListener('change', (e) => {
+document.getElementById('imgCompresorUpload')?.addEventListener('change', (e) => {
     let file = e.target.files[0];
     if(!file) return;
     

@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // SECUENCIADOR Y EXPORTACIÓN ZIP
 // ==========================================
 
@@ -14,7 +14,7 @@ async function renderTimelineSecuenciador() {
 
     for (let i = 0; i < spritesDetectados.length; i += chunk_size) {
         if (signal.aborted) return;
-        
+
         for (let j = i; j < i + chunk_size && j < spritesDetectados.length; j++) {
             let gIdx = j;
             let s = spritesDetectados[gIdx];
@@ -56,14 +56,14 @@ function moverFrame(idx, dir) {
 }
 function deleteFrame(idx) { spritesDetectados.splice(idx, 1); if (indexEditando === idx) indexEditando = null; autoRenumerar(); renderTimelineSecuenciador(); dibujarContornos(); actualizarDropdownFiltros(); actualizarDropdownPsych(); }
 
-document.getElementById('btnAplicarBatch').addEventListener('click', () => {
+document.getElementById('btnAplicarBatch')?.addEventListener('click', () => {
     let prefijo = document.getElementById('inputBatchName').value.trim(); if (!prefijo) return alert("❌ Escribe un prefijo.");
     let casillas = document.querySelectorAll('.frame-checkbox:checked'); if (casillas.length === 0) return alert("❌ Selecciona almenos un frame.");
     casillas.forEach((cb) => { let indice = parseInt(cb.getAttribute('data-index')); spritesDetectados[indice].name = prefijo + "0000"; });
     autoRenumerar(); actualizarDropdownFiltros(); actualizarDropdownPsych(); renderTimelineSecuenciador(); document.getElementById('inputBatchName').value = '';
 });
 
-document.getElementById('btnSelectAll').addEventListener('click', () => { let chks = document.querySelectorAll('.frame-checkbox'); let anyUnchecked = Array.from(chks).some(c => !c.checked); chks.forEach(cb => cb.checked = anyUnchecked); });
+document.getElementById('btnSelectAll')?.addEventListener('click', () => { let chks = document.querySelectorAll('.frame-checkbox'); let anyUnchecked = Array.from(chks).some(c => !c.checked); chks.forEach(cb => cb.checked = anyUnchecked); });
 
 function actualizarDropdownFiltros() {
     let current = selectAnimFilter.value; selectAnimFilter.innerHTML = '<option value="ALL">-- Reproduciendo Todo --</option>';
@@ -91,7 +91,7 @@ function renderizarPreviewTiempoReal() {
 
 function changeProp(p, v) { if (indexEditando === null) return; spritesDetectados[indexEditando][p] = parseInt(v) || 0; renderizarPreviewTiempoReal(); dibujarContornos(); }
 function incProp(p, amt) { if (indexEditando === null) return; spritesDetectados[indexEditando][p] = (parseInt(spritesDetectados[indexEditando][p]) || 0) + amt; document.getElementById(`inp_${p}`).value = spritesDetectados[indexEditando][p]; renderizarPreviewTiempoReal(); dibujarContornos(); }
-document.getElementById('btnToggleRotar').addEventListener('click', () => { if (indexEditando === null) return; let s = spritesDetectados[indexEditando]; s.angle = ((s.angle || 0) + 90) % 360; seleccionarFrameAfinador(indexEditando); dibujarContornos(); });
+document.getElementById('btnToggleRotar')?.addEventListener('click', () => { if (indexEditando === null) return; let s = spritesDetectados[indexEditando]; s.angle = ((s.angle || 0) + 90) % 360; seleccionarFrameAfinador(indexEditando); dibujarContornos(); });
 selectAnimFilter.addEventListener('change', () => { currentLoopFrameIdx = 0; updatePlayerInterval(); });
 
 function updatePlayerInterval() {
@@ -109,19 +109,19 @@ function updatePlayerInterval() {
     }, 1000 / fpsActual);
 }
 
-document.getElementById('btnPlayPause').addEventListener('click', () => { playActive = !playActive; let icono = playActive ? '3249/3249396.png' : '27/27223.png'; document.getElementById('btnPlayPause').innerHTML = `<img src="https://cdn-icons-png.flaticon.com/512/${icono}" class="icon" alt="PlayPause"> ` + (playActive ? "PAUSAR" : "REANUDAR"); updatePlayerInterval(); });
-document.getElementById('btnFpsUp').addEventListener('click', () => { if (fpsActual < 60) { fpsActual++; document.getElementById('txtFpsDisplay').textContent = `${fpsActual} FPS`; updatePlayerInterval(); } });
-document.getElementById('btnFpsDown').addEventListener('click', () => { if (fpsActual > 1) { fpsActual--; document.getElementById('txtFpsDisplay').textContent = `${fpsActual} FPS`; updatePlayerInterval(); } });
+document.getElementById('btnPlayPause')?.addEventListener('click', () => { playActive = !playActive; let icono = playActive ? '3249/3249396.png' : '27/27223.png'; document.getElementById('btnPlayPause').innerHTML = `<img src="https://cdn-icons-png.flaticon.com/512/${icono}" class="icon" alt="PlayPause"> ` + (playActive ? "PAUSAR" : "REANUDAR"); updatePlayerInterval(); });
+document.getElementById('btnFpsUp')?.addEventListener('click', () => { if (fpsActual < 60) { fpsActual++; document.getElementById('txtFpsDisplay').textContent = `${fpsActual} FPS`; updatePlayerInterval(); } });
+document.getElementById('btnFpsDown')?.addEventListener('click', () => { if (fpsActual > 1) { fpsActual--; document.getElementById('txtFpsDisplay').textContent = `${fpsActual} FPS`; updatePlayerInterval(); } });
 
 window.uploadedAnimationJSON = null;
 let jsonWarningResolve = null;
 
-window.resolverModalJsonWarning = function(continuar) {
+window.resolverModalJsonWarning = function (continuar) {
     document.getElementById('modalJsonWarning').style.display = 'none';
     if (jsonWarningResolve) jsonWarningResolve(continuar);
 };
 
-document.getElementById('jsonUpdateUpload').addEventListener('change', async (e) => {
+document.getElementById('jsonUpdateUpload')?.addEventListener('change', async (e) => {
     let file = e.target.files[0];
     if (!file) {
         window.uploadedAnimationJSON = null;
@@ -135,20 +135,19 @@ document.getElementById('jsonUpdateUpload').addEventListener('change', async (e)
         try {
             let json = JSON.parse(ev.target.result);
             window.uploadedAnimationJSON = { name: file.name, obj: json };
-            
-            // Mostrar resumen del JSON
+
             let animCount = (json.animations || []).length;
             let scaleOrig = json.scale || 1;
             let posStr = json.position ? `[${json.position[0]}, ${json.position[1]}]` : 'N/A';
-            
+
             document.getElementById('lblJsonUploaded').style.display = 'inline-block';
-            document.getElementById('lblJsonUploaded').innerHTML = 
+            document.getElementById('lblJsonUploaded').innerHTML =
                 `<img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" class="icon-sm"> ` +
                 `<b>${file.name}</b> | Anims: ${animCount} | Scale: ${scaleOrig} | Pos: ${posStr}`;
-            
+
             await pensar(400);
             ocultarCargaGlobal();
-        } catch(err) {
+        } catch (err) {
             ocultarCargaGlobal();
             alert("❌ Archivo JSON inválido.");
             window.uploadedAnimationJSON = null;
@@ -160,9 +159,9 @@ document.getElementById('jsonUpdateUpload').addEventListener('change', async (e)
 
 async function repackAndExport() {
     if (spritesDetectados.length === 0) return alert("No hay frames para empaquetar.");
-    
+
     let isOptimized = window.lastResizeFactor && window.lastResizeFactor < 1.0;
-    
+
     if (isOptimized && !window.uploadedAnimationJSON) {
         let continuar = await new Promise((resolve) => {
             jsonWarningResolve = resolve;
@@ -188,7 +187,7 @@ async function repackAndExport() {
         }
         jsonExportData = { name: window.uploadedAnimationJSON.name, content: JSON.stringify(json, null, "\t") };
     }
-    
+
     showLoader("OPTIMIZADOR", "Comprimiendo .XML + .PNG en .ZIP..."); await pensar(500);
 
     let uniqueFrames = []; let duplicatesMap = new Map(); let hashMap = new Map();
@@ -258,7 +257,7 @@ async function exportarActual() {
         if (spritesDetectados.length === 0) return alert("❌ No hay frames para exportar.");
 
         let isOptimized = window.lastResizeFactor && window.lastResizeFactor < 1.0;
-        
+
         if (isOptimized && !window.uploadedAnimationJSON) {
             let continuar = await new Promise((resolve) => {
                 jsonWarningResolve = resolve;
@@ -272,7 +271,6 @@ async function exportarActual() {
             let json = JSON.parse(JSON.stringify(window.uploadedAnimationJSON.obj));
             if (isOptimized) {
                 let factor = window.lastResizeFactor;
-                // Solo modificar scale (inverso). position, camera_position y offsets NO se tocan.
                 json.scale = Number(((json.scale || 1) / factor).toFixed(4));
             }
             jsonExportData = { name: window.uploadedAnimationJSON.name, content: JSON.stringify(json, null, "\t") };
@@ -280,7 +278,7 @@ async function exportarActual() {
 
         let baseName = nombreArchivo.replace(/\.[^/.]+$/, "");
         let finalBaseName = isOptimized ? baseName + "_opt" : baseName;
-        
+
         let nombrePNG = finalBaseName + ".png";
 
         let xmlLines = [];
@@ -343,7 +341,7 @@ async function aplicarResizeOptimizador() {
         else if (maxDim > 2048) factor = 2048 / maxDim;
         else if (maxDim > 1024) factor = 0.75;
         else {
-            return alert("✅ Tu imagen ya está optimizada o es muy pequeña (menor a 1024px). No es necesario reducirla.");
+            return alert("Tu imagen ya está optimizada o es muy pequeña (menor a 1024px). No es necesario reducirla.");
         }
     } else if (sel === 'custom') {
         let val = parseFloat(document.getElementById('inpResizeCustom').value);
@@ -367,8 +365,7 @@ async function aplicarResizeOptimizador() {
     tempCanvas.width = newWidth;
     tempCanvas.height = newHeight;
     let tempCtx = tempCanvas.getContext('2d');
-    
-    // Mejor interpolación en canvas
+
     tempCtx.imageSmoothingEnabled = true;
     tempCtx.imageSmoothingQuality = 'high';
     tempCtx.drawImage(imgOriginal, 0, 0, newWidth, newHeight);
@@ -397,7 +394,7 @@ async function aplicarResizeOptimizador() {
         renderTimelineSecuenciador();
         if (indexEditando !== null) seleccionarFrameAfinador(indexEditando);
         if (typeof dibujarContornos === 'function') dibujarContornos();
-        
+
         ocultarCargaGlobal();
         alert(`¡Optimización completada!\nNuevo tamaño de imagen: ${newWidth}x${newHeight}\nEl XML ha sido ajustado automáticamente.`);
         if (typeof window.autoSaveHistory === 'function') window.autoSaveHistory();

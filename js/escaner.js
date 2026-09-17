@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // MODO ESCANER Y CÁMARA
 // ==========================================
 
@@ -19,12 +19,12 @@ function setGlobalMode(mode) {
     }
 }
 
-document.getElementById('btnZoomIn').addEventListener('click', () => {
+document.getElementById('btnZoomIn')?.addEventListener('click', () => {
     let oldZoom = zoomActual; zoomActual = Math.round((zoomActual + 0.1) * 10) / 10; if (zoomActual > 3.0) zoomActual = 3.0;
     let rect = scanWrapper.getBoundingClientRect(); let cx = rect.width / 2; let cy = rect.height / 2;
     panX = cx - (cx - panX) * (zoomActual / oldZoom); panY = cy - (cy - panY) * (zoomActual / oldZoom); actualizarCSSCamera();
 });
-document.getElementById('btnZoomOut').addEventListener('click', () => {
+document.getElementById('btnZoomOut')?.addEventListener('click', () => {
     let oldZoom = zoomActual; zoomActual = Math.round((zoomActual - 0.1) * 10) / 10; if (zoomActual < 0.1) zoomActual = 0.1;
     let rect = scanWrapper.getBoundingClientRect(); let cx = rect.width / 2; let cy = rect.height / 2;
     panX = cx - (cx - panX) * (zoomActual / oldZoom); panY = cy - (cy - panY) * (zoomActual / oldZoom); actualizarCSSCamera();
@@ -76,7 +76,7 @@ window.addEventListener('keydown', (e) => {
     if (handled) { e.preventDefault(); b.frameWidth = b.w; b.frameHeight = b.h; dibujarContornos(); }
 });
 
-scanWrapper.addEventListener('pointerdown', (e) => {
+scanWrapper?.addEventListener('pointerdown', (e) => {
     if (!imgOriginal.src) return;
     scanWrapper.setPointerCapture(e.pointerId); activePointers[e.pointerId] = { x: e.clientX, y: e.clientY };
     if (globalMode === 'EDIT') {
@@ -97,7 +97,7 @@ scanWrapper.addEventListener('pointerdown', (e) => {
     }
 });
 
-scanWrapper.addEventListener('pointermove', (e) => {
+scanWrapper?.addEventListener('pointermove', (e) => {
     if (!activePointers[e.pointerId]) return;
     if (globalMode === 'VIEW') {
         let keys = Object.keys(activePointers);
@@ -127,7 +127,7 @@ scanWrapper.addEventListener('pointermove', (e) => {
 });
 
 function removePointer(e) { delete activePointers[e.pointerId]; if (isDragging) { isDragging = false; dragAction = null; actualizarDropdownFiltros(); actualizarDropdownPsych(); } }
-scanWrapper.addEventListener('pointerup', removePointer); scanWrapper.addEventListener('pointercancel', removePointer);
+scanWrapper?.addEventListener('pointerup', removePointer); scanWrapper?.addEventListener('pointercancel', removePointer);
 
 function dibujarContornos() {
     if (!imgOriginal.src) return;
@@ -152,7 +152,7 @@ function dibujarContornos() {
 
 function clearAllScan() { spritesDetectados = []; selScanIdx = -1; dibujarContornos(); }
 
-document.getElementById('btnProcesar').addEventListener('click', () => {
+document.getElementById('btnProcesar')?.addEventListener('click', () => {
     showLoader("EJECUTANDO ESCANER", "Iniciando escaner...");
 
     setTimeout(() => {

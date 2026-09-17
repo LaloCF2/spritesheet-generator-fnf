@@ -28,9 +28,11 @@ function handleAtlasFileDrop(file) {
     }
 }
 
-document.getElementById('atlasAnimUpload').addEventListener('change', (e) => {
+var atlasAnimFileName = "Animation.json";
+document.getElementById('atlasAnimUpload')?.addEventListener('change', (e) => {
     let file = e.target.files[0];
     if (!file) return;
+    atlasAnimFileName = file.name;
     let reader = new FileReader();
     reader.onload = function (event) {
         try {
@@ -41,9 +43,11 @@ document.getElementById('atlasAnimUpload').addEventListener('change', (e) => {
     reader.readAsText(file);
 });
 
-document.getElementById('atlasJsonUpload').addEventListener('change', (e) => {
+var atlasJsonFileName = "spritemap.json";
+document.getElementById('atlasJsonUpload')?.addEventListener('change', (e) => {
     let file = e.target.files[0];
     if (!file) return;
+    atlasJsonFileName = file.name;
     let reader = new FileReader();
     reader.onload = function (event) {
         try {
@@ -63,7 +67,29 @@ document.getElementById('atlasJsonUpload').addEventListener('change', (e) => {
     reader.readAsText(file);
 });
 
-document.getElementById('atlasPngUpload').addEventListener('change', (e) => {
+var atlasCharJsonObj = null;
+var atlasCharJsonFileName = "character.json";
+document.getElementById('atlasCharJsonUpload')?.addEventListener('change', (e) => {
+    let file = e.target.files[0];
+    if (!file) return;
+    atlasCharJsonFileName = file.name;
+    let reader = new FileReader();
+    reader.onload = function (event) {
+        try {
+            atlasCharJsonObj = JSON.parse(event.target.result);
+            let btn = document.getElementById('btnAtlasCharJson');
+            if (btn) {
+                btn.style.background = '#ffaa00';
+                btn.style.color = '#000';
+                btn.style.border = 'none';
+                btn.innerHTML = `<img src="https://cdn-icons-png.flaticon.com/128/190/190411.png" class="icon icon-black" alt="Check"> CARGADO: ${atlasCharJsonFileName}`;
+            }
+        } catch (err) { alert("Error: Character JSON inválido."); }
+    };
+    reader.readAsText(file);
+});
+
+document.getElementById('atlasPngUpload')?.addEventListener('change', (e) => {
     let file = e.target.files[0];
     if (!file) return;
     atlasPngFileName = file.name;
@@ -138,8 +164,218 @@ function updateAtlasPreviewCanvas() {
     renderSymbolTimeline(atlasAnimObj.AN.TL, anim.start, ctx);
 }
 
+window.toggleAtlasRawMode = function () {
+    let isRaw = document.getElementById('chkExportAtlasRaw')?.checked;
+    let resizeConfig = document.getElementById('atlasResizeConfig');
+    let sparrowConfig = document.getElementById('atlasSparrowConfig');
+    let btnRun = document.getElementById('btnRunAtlas');
+
+    if (isRaw) {
+        if (resizeConfig) resizeConfig.style.display = 'block';
+        if (sparrowConfig) sparrowConfig.style.display = 'none';
+        if (btnRun) btnRun.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/128/11252/11252744.png" class="icon" alt="Procesar"> DESCARGAR ATLAS REDIMENSIONADO';
+    } else {
+        if (resizeConfig) resizeConfig.style.display = 'none';
+        if (sparrowConfig) sparrowConfig.style.display = 'flex';
+        if (btnRun) btnRun.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/128/11252/11252744.png" class="icon" alt="Procesar"> GENERAR Y DESCARGAR ARCHIVOS';
+    }
+};
+
+window.checkAtlasCustomResize = function () {
+    let sel = document.getElementById('selAtlasResizeFactor');
+    let inp = document.getElementById('inpAtlasResizeCustom');
+    if (sel && inp) {
+        if (sel.value === 'custom') {
+            inp.style.display = 'inline-block';
+        } else {
+            inp.style.display = 'none';
+        }
+    }
+};
+
+function getAtlasScaleFactor() {
+    let sel = document.getElementById('selAtlasResizeFactor')?.value;
+    if (sel === 'custom') {
+        let val = parseFloat(document.getElementById('inpAtlasResizeCustom')?.value);
+        if (isNaN(val) || val <= 0) return 1;
+        return val / 100;
+    }
+    return parseFloat(sel) || 1;
+}
+
+function scaleAtlasAnimationNode(node, factor) {
+    if (Array.isArray(node)) {
+        node.forEach(n => scaleAtlasAnimationNode(n, factor));
+    } else if (typeof node === 'object' && node !== null) {
+        if (node.M3D && Array.isArray(node.M3D) && node.M3D.length === 16) {
+            node.M3D[12] *= factor;
+            node.M3D[13] *= factor;
+        }
+        if (node.TRP) {
+            if (node.TRP.x !== undefined) node.TRP.x *= factor;
+            if (node.TRP.y !== undefined) node.TRP.y *= factor;
+        }
+        for (let key in node) {
+            scaleAtlasAnimationNode(node[key], factor);
+        }
+    }
+}
+
+async function exportScaledAtlasRaw(optOpt) {
+    let factor = getAtlasScaleFactor();
+    showLoader("ESCALANDO", factor === 1 ? "Preparando archivos originales..." : `Redimensionando al ${Math.round(factor * 100)}%...`);
+    await pensar(50);
+
+    let newAnim = JSON.parse(JSON.stringify(atlasAnimObj));
+    let newJson = JSON.parse(JSON.stringify(atlasJsonObj));
+
+    if (factor !== 1) {
+        if (newJson.meta && newJson.meta.size) {
+            newJson.meta.size.w = Math.round(newJson.meta.size.w * factor);
+            newJson.meta.size.h = Math.round(newJson.meta.size.h * factor);
+        }
+        if (newJson.ATLAS && newJson.ATLAS.SPRITES) {
+            newJson.ATLAS.SPRITES.forEach(s => {
+                if (s.SPRITE) {
+                    s.SPRITE.x = Math.round(s.SPRITE.x * factor);
+                    s.SPRITE.y = Math.round(s.SPRITE.y * factor);
+                    s.SPRITE.w = Math.round(s.SPRITE.w * factor);
+                    s.SPRITE.h = Math.round(s.SPRITE.h * factor);
+                }
+            });
+        } else if (newJson.frames) {
+            for (let k in newJson.frames) {
+                let f = newJson.frames[k].frame;
+                if (f) {
+                    f.x = Math.round(f.x * factor);
+                    f.y = Math.round(f.y * factor);
+                    f.w = Math.round(f.w * factor);
+                    f.h = Math.round(f.h * factor);
+                }
+                let sS = newJson.frames[k].spriteSourceSize;
+                if (sS) {
+                    sS.x = Math.round(sS.x * factor);
+                    sS.y = Math.round(sS.y * factor);
+                    sS.w = Math.round(sS.w * factor);
+                    sS.h = Math.round(sS.h * factor);
+                }
+                let sZ = newJson.frames[k].sourceSize;
+                if (sZ) {
+                    sZ.w = Math.round(sZ.w * factor);
+                    sZ.h = Math.round(sZ.h * factor);
+                }
+            }
+        }
+        scaleAtlasAnimationNode(newAnim, factor);
+    }
+
+    let finalW = Math.max(1, Math.round(atlasPngImg.width * factor));
+    let finalH = Math.max(1, Math.round(atlasPngImg.height * factor));
+    let finalCanv = document.createElement('canvas');
+    finalCanv.width = finalW;
+    finalCanv.height = finalH;
+    let ctx = finalCanv.getContext('2d');
+    ctx.drawImage(atlasPngImg, 0, 0, finalW, finalH);
+
+    let baseName = document.getElementById('txtAtlasExportName')?.value.trim() || atlasPngFileName.replace('.png', '');
+    let zipName = baseName;
+    if (factor !== 1) {
+        zipName += `_${Math.round(factor * 100)}pct`;
+    }
+
+    let newCharJson = null;
+    if (atlasCharJsonObj) {
+        newCharJson = JSON.parse(JSON.stringify(atlasCharJsonObj));
+        if (factor !== 1) {
+            if (newCharJson.position && newCharJson.position.length >= 2) {
+                newCharJson.position[0] = Math.round(newCharJson.position[0] * factor);
+                newCharJson.position[1] = Math.round(newCharJson.position[1] * factor);
+            }
+            if (newCharJson.camera_position && newCharJson.camera_position.length >= 2) {
+                newCharJson.camera_position[0] = Math.round(newCharJson.camera_position[0] * factor);
+                newCharJson.camera_position[1] = Math.round(newCharJson.camera_position[1] * factor);
+            }
+        }
+    }
+
+    let minFakeTime = 40;
+    let maxFakeTime = 70;
+    let fakeTimeSeconds = Math.floor(Math.random() * (maxFakeTime - minFakeTime + 1)) + minFakeTime;
+    let iterations = 10;
+    let msPerIter = (fakeTimeSeconds * 1000) / iterations;
+
+    let mensajesPolido = [
+        "Analizando estructuras...",
+        "Calculando nuevas dimensiones...",
+        "Ajustando resolucion...",
+        "Reestructurando animación...",
+        "Optimizando sprites...",
+        "Buscando impurezas visuales...",
+        "Mejorando calidad de renderizado...",
+        "Empaquetando datos...",
+        "Verificando integridad...",
+        "Casi listo..."
+    ];
+
+    for (let i = 0; i < iterations; i++) {
+        let porc = Math.round((i / iterations) * 100);
+        showLoader("PULIENDO...", `${mensajesPolido[i % mensajesPolido.length]} (${porc}%)<br><small style="color:#aaa;">Este proceso de pulido toma su tiempo...</small>`);
+        await pensar(msPerIter);
+    }
+    showLoader("PULIENDO...", "Generando archivos finales (100%)...");
+    await pensar(500);
+
+    let zip = new JSZip();
+    let folder = zip.folder(zipName);
+
+    folder.file(atlasAnimFileName || "Animation.json", JSON.stringify(newAnim, null, 2));
+    folder.file(atlasJsonFileName || "spritemap.json", JSON.stringify(newJson, null, 2));
+    if (newCharJson) {
+        folder.file(atlasCharJsonFileName || "character.json", JSON.stringify(newCharJson, null, 2));
+    }
+
+    let pngBlob = null;
+    if (optOpt) {
+        showLoader("ESCALANDO", "Comprimiendo PNG con UPNG...");
+        await pensar(50);
+        let rgba = ctx.getImageData(0, 0, finalW, finalH).data;
+        let upng = UPNG.encode([rgba.buffer], finalW, finalH, 256);
+        pngBlob = new Blob([upng], { type: 'image/png' });
+    } else {
+        pngBlob = await new Promise(res => finalCanv.toBlob(res, 'image/png'));
+    }
+    folder.file(atlasPngFileName || "spritemap.png", pngBlob);
+
+    showLoader("GENERANDO ZIP", "Preparando archivo final...");
+    await pensar(50);
+
+    let content = await zip.generateAsync({ type: "blob" });
+    let url = URL.createObjectURL(content);
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = zipName + "_Atlas.zip";
+    a.click();
+
+    ocultarCargaGlobal();
+    let box = document.getElementById('atlasPreviewBox');
+    if (box) {
+        box.innerHTML = `
+            <div style="font-size:2rem; font-weight:bold; color:var(--accent-gold);">¡GENERADO!</div>
+            <div style="color:#aaa; font-size:0.8rem; margin-top:5px;">Descarga de Atlas completa.</div>
+        `;
+    }
+}
+
 async function ejecutarAtlasBaker() {
     if (!atlasAnimObj || !atlasJsonObj || !atlasPngImg) return alert("Faltan archivos.");
+
+    let isRawMode = document.getElementById('chkExportAtlasRaw')?.checked;
+    let currentOptOpt = document.getElementById('chkAtlasOpt')?.checked;
+
+    if (isRawMode) {
+        await exportScaledAtlasRaw(currentOptOpt);
+        return;
+    }
 
     let optPng = document.getElementById('chkAtlasPng').checked;
     let optOpt = document.getElementById('chkAtlasOpt').checked;

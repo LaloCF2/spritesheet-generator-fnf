@@ -1,7 +1,7 @@
-// ==========================================
+﻿// ==========================================
 // 1. main.js - NÚCLEO GLOBAL, VARIABLES Y FUNCIONES
 // ==========================================
-const CURRENT_VERSION = '1.3';
+const CURRENT_VERSION = '1.4';
 
 window.onload = () => {
     const savedTheme = localStorage.getItem('iasprite_theme') || 'cyberpunk';
@@ -22,7 +22,6 @@ window.onload = () => {
         if (modChangelog) modChangelog.style.display = 'flex';
     }
 
-    // Quitar el loader global despus de que todo carg
     setTimeout(() => {
         ocultarCargaGlobal();
     }, 500);
@@ -90,10 +89,10 @@ var spritesDetectados = []; var psychAnimations = []; var indexEditando = null;
 let zoomActual = 1.0; let panX = 0, panY = 0; let globalMode = 'VIEW';
 
 const scanWrapper = document.getElementById('scanWrapper');
-const canvas = document.getElementById('canvasSprites'); const ctx = canvas.getContext('2d');
-const canvasPreview = document.getElementById('canvasPreview'); const ctxPreview = canvasPreview.getContext('2d');
-const canvasLoopPlayer = document.getElementById('canvasLoopPlayer'); const ctxLoopPlayer = canvasLoopPlayer.getContext('2d');
-const canvasPsychLive = document.getElementById('canvasPsychLive'); const ctxPsychLive = canvasPsychLive.getContext('2d');
+const canvas = document.getElementById('canvasSprites'); const ctx = canvas?.getContext('2d');
+const canvasPreview = document.getElementById('canvasPreview'); const ctxPreview = canvasPreview?.getContext('2d');
+const canvasLoopPlayer = document.getElementById('canvasLoopPlayer'); const ctxLoopPlayer = canvasLoopPlayer?.getContext('2d');
+const canvasPsychLive = document.getElementById('canvasPsychLive'); const ctxPsychLive = canvasPsychLive?.getContext('2d');
 
 const timelineContainer = document.getElementById('timelineContainer');
 const selectAnimFilter = document.getElementById('selectAnimFilter');
@@ -104,9 +103,9 @@ const psychAnimList = document.getElementById('psychAnimList');
 let playActive = true; let playInterval = null; let currentLoopFrameIdx = 0; let fpsActual = 24;
 let psychLiveActiveAnimIdx = -1; let psychLiveFrameIdx = 0; let psychLiveInterval = null;
 
-document.getElementById('sliderCorte').addEventListener('input', (e) => document.getElementById('valCorte').textContent = e.target.value);
-document.getElementById('sliderUnion').addEventListener('input', (e) => document.getElementById('valUnion').textContent = e.target.value);
-document.getElementById('sliderPad').addEventListener('input', (e) => document.getElementById('valPad').textContent = e.target.value);
+document.getElementById('sliderCorte')?.addEventListener('input', (e) => { let v = document.getElementById('valCorte'); if (v) v.textContent = e.target.value; });
+document.getElementById('sliderUnion')?.addEventListener('input', (e) => { let v = document.getElementById('valUnion'); if (v) v.textContent = e.target.value; });
+document.getElementById('sliderPad')?.addEventListener('input', (e) => { let v = document.getElementById('valPad'); if (v) v.textContent = e.target.value; });
 
 window.autoRenumerar = function () {
     let contadores = {};
@@ -142,14 +141,16 @@ async function openWindow(winId) {
 
     document.querySelectorAll('.window-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.win-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(winId).classList.add('active');
 
-    if (winId === 'win-home') document.getElementById('navHome').classList.add('active');
-    if (winId === 'win-escaner') document.getElementById('navEscaner').classList.add('active');
-    if (winId === 'win-orden') document.getElementById('navOrden').classList.add('active');
-    if (winId === 'win-afinador') document.getElementById('navAfinador').classList.add('active');
-    if (winId === 'win-psych') document.getElementById('navPsych').classList.add('active');
-    if (winId === 'win-compresor') document.getElementById('navCompresor').classList.add('active');
+    let win = document.getElementById(winId);
+    if (win) win.classList.add('active');
+
+    let nHome = document.getElementById('navHome'); if (nHome && winId === 'win-home') nHome.classList.add('active');
+    let nEsc = document.getElementById('navEscaner'); if (nEsc && winId === 'win-escaner') nEsc.classList.add('active');
+    let nOrd = document.getElementById('navOrden'); if (nOrd && winId === 'win-orden') nOrd.classList.add('active');
+    let nAfin = document.getElementById('navAfinador'); if (nAfin && winId === 'win-afinador') nAfin.classList.add('active');
+    let nPsych = document.getElementById('navPsych'); if (nPsych && winId === 'win-psych') nPsych.classList.add('active');
+    let nComp = document.getElementById('navCompresor'); if (nComp && winId === 'win-compresor') nComp.classList.add('active');
 
     if (winId === 'win-afinador' && typeof renderizarPreviewTiempoReal === 'function') { renderizarPreviewTiempoReal(); updatePlayerInterval(); }
     if (winId === 'win-orden' && typeof renderTimelineSecuenciador === 'function') { renderTimelineSecuenciador(); }
@@ -160,23 +161,27 @@ async function openWindow(winId) {
 }
 
 function toggleNavButtons() {
-    document.getElementById('navEscaner').style.display = (appMode === 'SCAN') ? 'flex' : 'none';
-    document.getElementById('navOrden').style.display = (appMode === 'SCAN' || appMode === 'EDIT') ? 'flex' : 'none';
-    document.getElementById('navAfinador').style.display = (appMode === 'SCAN' || appMode === 'EDIT') ? 'flex' : 'none';
-    document.getElementById('navPsych').style.display = (appMode === 'PSYCH') ? 'flex' : 'none';
-    document.getElementById('navCompresor').style.display = (appMode === 'COMPRESS') ? 'flex' : 'none';
-    document.getElementById('navAudio').style.display = (appMode === 'AUDIO') ? 'flex' : 'none';
-    document.getElementById('navAtlas').style.display = (appMode === 'ATLAS') ? 'flex' : 'none';
+    let nScan = document.getElementById('navEscaner'); if (nScan) nScan.style.display = (appMode === 'SCAN') ? 'flex' : 'none';
+    let nOrd = document.getElementById('navOrden'); if (nOrd) nOrd.style.display = (appMode === 'SCAN' || appMode === 'EDIT') ? 'flex' : 'none';
+    let nAfin = document.getElementById('navAfinador'); if (nAfin) nAfin.style.display = (appMode === 'SCAN' || appMode === 'EDIT') ? 'flex' : 'none';
+    let nPsych = document.getElementById('navPsych'); if (nPsych) nPsych.style.display = (appMode === 'PSYCH') ? 'flex' : 'none';
+    let nComp = document.getElementById('navCompresor'); if (nComp) nComp.style.display = (appMode === 'COMPRESS') ? 'flex' : 'none';
+    let nAud = document.getElementById('navAudio'); if (nAud) nAud.style.display = (appMode === 'AUDIO') ? 'flex' : 'none';
+    let nAtl = document.getElementById('navAtlas'); if (nAtl) nAtl.style.display = (appMode === 'ATLAS') ? 'flex' : 'none';
 
-    document.getElementById('navPack').style.display = (appMode === 'EDIT' || appMode === 'SCAN') ? 'flex' : 'none';
-    document.getElementById('navExport').style.display = (appMode === 'EDIT' || appMode === 'SCAN' || appMode === 'PSYCH') ? 'flex' : 'none';
+    let nPack = document.getElementById('navPack'); if (nPack) nPack.style.display = (appMode === 'EDIT' || appMode === 'SCAN') ? 'flex' : 'none';
+    let nExp = document.getElementById('navExport'); if (nExp) nExp.style.display = (appMode === 'EDIT' || appMode === 'SCAN' || appMode === 'PSYCH') ? 'flex' : 'none';
 
     if (appMode === 'PSYCH') {
-        document.getElementById('navExport').innerHTML = '<img src="https://cdn-icons-png.flaticon.com/512/136/136443.png" class="icon" alt="JSON"> Generar JSON';
-        document.getElementById('navExport').style.background = 'linear-gradient(135deg, #558800, #224400)';
+        if (nExp) {
+            nExp.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/512/136/136443.png" class="icon" alt="JSON"> Generar JSON';
+            nExp.style.background = 'linear-gradient(135deg, #558800, #224400)';
+        }
     } else {
-        document.getElementById('navExport').innerHTML = '<img src="https://cdn-icons-png.flaticon.com/512/2874/2874091.png" class="icon" alt="XML"> Solo Guardar XML';
-        document.getElementById('navExport').style.background = 'linear-gradient(135deg, #008888, #005555)';
+        if (nExp) {
+            nExp.innerHTML = '<img src="https://cdn-icons-png.flaticon.com/512/2874/2874091.png" class="icon" alt="XML"> Solo Guardar XML';
+            nExp.style.background = 'linear-gradient(135deg, #008888, #005555)';
+        }
     }
 }
 
@@ -216,13 +221,13 @@ function loadMainImage(file, callback) {
     reader.readAsDataURL(file);
 }
 
-document.getElementById('imageInputScan').addEventListener('change', (e) => { loadMainImage(e.target.files[0], () => { document.getElementById('btnProcesar').style.display = 'flex'; }); });
+document.getElementById('imageInputScan')?.addEventListener('change', (e) => { loadMainImage(e.target.files[0], () => { let btn = document.getElementById('btnProcesar'); if (btn) btn.style.display = 'flex'; }); });
 
 let tI2 = null, tX2 = null, tI3 = null, tX3 = null;
-document.getElementById('modImage').addEventListener('change', e => { tI2 = e.target.files[0]; checkDual('EDIT'); });
-document.getElementById('modXML').addEventListener('change', e => { tX2 = e.target.files[0]; checkDual('EDIT'); });
-document.getElementById('psychImage').addEventListener('change', e => { tI3 = e.target.files[0]; checkDual('PSYCH'); });
-document.getElementById('psychXML').addEventListener('change', e => { tX3 = e.target.files[0]; checkDual('PSYCH'); });
+document.getElementById('modImage')?.addEventListener('change', e => { tI2 = e.target.files[0]; checkDual('EDIT'); });
+document.getElementById('modXML')?.addEventListener('change', e => { tX2 = e.target.files[0]; checkDual('EDIT'); });
+document.getElementById('psychImage')?.addEventListener('change', e => { tI3 = e.target.files[0]; checkDual('PSYCH'); });
+document.getElementById('psychXML')?.addEventListener('change', e => { tX3 = e.target.files[0]; checkDual('PSYCH'); });
 
 function checkDual(mode) {
     let imgF = mode === 'EDIT' ? tI2 : tI3; let xmlF = mode === 'EDIT' ? tX2 : tX3;
@@ -311,10 +316,9 @@ window.addEventListener('drop', (e) => {
 });
 
 // ==========================================
-// LAZY LOADING: IMÁGENES CON SPINNER ADAPTATIVO
+// LAZY LOADING: IMÁGENES
 // ==========================================
 (function initImageLazyLoad() {
-    // Estilo del spinner inline para imágenes
     const spinnerCSS = document.createElement('style');
     spinnerCSS.textContent = `
         .img-lazy-wrap {
@@ -344,9 +348,9 @@ window.addEventListener('drop', (e) => {
     document.head.appendChild(spinnerCSS);
 
     function wrapImage(img) {
-        if (img.closest('.img-lazy-wrap')) return; // Ya envuelto
-        if (img.closest('#globalLoader')) return;  // No tocar el loader
-        if (img.closest('.timeline-item')) return;  // No tocar los canvas
+        if (img.closest('.img-lazy-wrap')) return;
+        if (img.closest('#globalLoader')) return;
+        if (img.closest('.timeline-item')) return;
         if (img.naturalWidth > 0 && img.complete) {
             img.classList.add('img-loaded');
             return;
@@ -354,11 +358,10 @@ window.addEventListener('drop', (e) => {
 
         const wrap = document.createElement('span');
         wrap.className = 'img-lazy-wrap';
-        
+
         const spinner = document.createElement('span');
         spinner.className = 'img-mini-spinner';
 
-        // Adaptar tamaño del spinner a la imagen
         let imgW = img.width || img.offsetWidth || 20;
         let imgH = img.height || img.offsetHeight || 20;
         let spinSize = Math.max(10, Math.min(imgW, imgH, 24));
@@ -379,19 +382,16 @@ window.addEventListener('drop', (e) => {
             img.style.opacity = '0.3';
         }, { once: true });
 
-        // Forzar recarga si la imagen ya estaba cacheada
         if (img.complete && img.naturalWidth > 0) {
             img.classList.add('img-loaded');
             spinner.remove();
         }
     }
 
-    // Envolver las imágenes existentes al cargar
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('img:not(.img-loaded)').forEach(wrapImage);
     });
 
-    // Observer para imágenes que se agregan dinámicamente
     const observer = new MutationObserver((mutations) => {
         mutations.forEach(m => {
             m.addedNodes.forEach(node => {
