@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spritegen-v1.1';
+const CACHE_NAME = 'spritegen-v1.4';
 const urlsToCache = [
   './',
   './index.html',
