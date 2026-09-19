@@ -126,7 +126,7 @@
                         alt="Upload"> CARGAR SPRITEMAP.JSON
                 </button>
 
-                <input type="file" id="atlasPngUpload" class="hidden-file" accept="image/png">
+                <input type="file" id="atlasPngUpload" class="hidden-file" accept=".png, image/png">
                 <button class="btn-pildora"
                     style="flex:1; padding: 15px; font-size: 1rem; background: #ff3366; color: #000; border:none;"
                     onclick="document.getElementById('atlasPngUpload').click();">
@@ -301,7 +301,6 @@
             <h2 class="modal-title"><img src="https://cdn-icons-png.flaticon.com/128/2088/2088617.png"
                     style="width:30px; filter:brightness(0) invert(1);"> Sesión Anterior</h2>
             <div class="modal-body" id="historyModalContent">
-                <!-- Se inyecta desde js -->
             </div>
             <button class="btn-pildora btn-secundario" style="width:100%; margin-top:20px;"
                 onclick="closeHistoryModal()">Cancelar</button>
