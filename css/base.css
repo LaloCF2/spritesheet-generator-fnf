@@ -5,11 +5,14 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 html {
     overflow-x: hidden;
     scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
 }
 
 body {
