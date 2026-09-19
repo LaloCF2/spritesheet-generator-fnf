@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // COMPRESOR DE AUDIO OGG (VÍA FFMPEG.WASM)
 // ==========================================
 
@@ -94,27 +94,36 @@ async function ejecutarCompresionAudio() {
     showLoader("MOTOR DE AUDIO", "Cargando motor FFmpeg en el navegador...<br><br><span style='font-size:0.8rem;color:#ffaa00;'>La primera vez que lo uses puede tardar unos segundos en descargar el motor. ¡No cierres la página!</span>");
 
     try {
-        const { FFmpeg } = window.FFmpeg;
+        const { FFmpeg } = window.FFmpegWASM;
         const { fetchFile, toBlobURL } = window.FFmpegUtil;
 
         if (!window.ffmpegInstance) {
             window.ffmpegInstance = new FFmpeg();
 
             window.ffmpegInstance.on('progress', ({ progress }) => {
-                let pct = Math.round(progress * 100);
-                if (pct > 0 && pct <= 100) {
-                    document.getElementById('iaStatusTxt').innerHTML = `
-                        <div style="font-size:0.9rem; color:#aaa; margin-bottom:5px;">Codificando Audio...</div>
-                        <div style="font-size:2.5rem; font-weight:900; color:#ffaa00; text-shadow: 0 0 10px rgba(255,170,0,0.5);">${pct}%</div>
-                        <div style="font-size:0.8rem; color:#fff; margin-top:5px;">Reduciendo peso.</div>
-                    `;
+                try {
+                    let pct = Math.round(progress * 100);
+                    if (pct > 0 && pct <= 100) {
+                        let loaderTxt = document.getElementById('globalLoaderText');
+                        if (loaderTxt) {
+                            loaderTxt.innerHTML = `
+                                <div style="font-size:0.9rem; color:#aaa; margin-bottom:5px;">Codificando Audio...</div>
+                                <div style="font-size:2.5rem; font-weight:900; color:#ffaa00; text-shadow: 0 0 10px rgba(255,170,0,0.5);">${pct}%</div>
+                                <div style="font-size:0.8rem; color:#fff; margin-top:5px;">Reduciendo peso.</div>
+                            `;
+                        }
+                    }
+                } catch(e) {
+                    console.error("Error en progreso:", e);
                 }
             });
 
             const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+            const ffmpegURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd';
             await window.ffmpegInstance.load({
                 coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
                 wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+                classWorkerURL: await toBlobURL(`${ffmpegURL}/814.ffmpeg.js`, 'text/javascript'),
             });
         }
 

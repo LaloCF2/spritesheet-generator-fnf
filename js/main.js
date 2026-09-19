@@ -1,5 +1,5 @@
-﻿// ==========================================
-// 1. main.js - NÚCLEO GLOBAL, VARIABLES Y FUNCIONES
+// ==========================================
+// NÚCLEO GLOBAL, VARIABLES Y FUNCIONES
 // ==========================================
 const CURRENT_VERSION = '1.4';
 
@@ -24,8 +24,42 @@ window.onload = () => {
 
     setTimeout(() => {
         ocultarCargaGlobal();
+        checkMobileData();
     }, 500);
 };
+
+function checkMobileData() {
+    let hideWarning = localStorage.getItem('hideDataWarning');
+    if (hideWarning === 'true') return;
+
+    let isCellular = false;
+    if (navigator.connection && (navigator.connection.type === 'cellular' || navigator.connection.saveData)) {
+        isCellular = true;
+    }
+
+    if (!isCellular) return;
+
+    let modalHTML = `
+    <div id="dataWarningModal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:99999; display:flex; justify-content:center; align-items:center;">
+        <div style="background:var(--bg-glass, rgba(30,30,30,0.9)); border:1px solid #ffaa00; border-radius:15px; padding:30px; text-align:center; max-width:90%; width:400px; box-shadow:0 0 20px rgba(255,170,0,0.4); backdrop-filter:blur(10px);">
+            <img src="https://cdn-icons-png.flaticon.com/128/833/833446.png" style="width:60px; margin-bottom:15px; filter: invert(0.8) sepia(1) saturate(5) hue-rotate(360deg);">
+            <h2 style="color:#ffaa00; margin-bottom:15px;">Aviso de Datos Móviles</h2>
+            <p style="color:var(--text, #fff); font-size:0.9rem; line-height:1.4; margin-bottom:20px;">
+                Parece que estás usando una conexión de datos móviles. Esta aplicación procesa imágenes y herramientas que pueden consumir tu plan de datos.<br><br>¿Deseas continuar?
+            </p>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button onclick="document.getElementById('dataWarningModal').style.display='none';" style="padding:12px; background:#ffaa00; color:#000; border:none; border-radius:8px; font-weight:bold; font-size:1rem; cursor:pointer;">ESTOY DE ACUERDO</button>
+                <button onclick="document.body.innerHTML='<div style=\\'color:white; text-align:center; margin-top:50px; font-family:sans-serif;\\'><h1>Carga Detenida</h1><p>Has bloqueado el uso de la app para no consumir datos móviles.</p></div>';" style="padding:12px; background:rgba(255,255,255,0.1); color:var(--text, #fff); border:1px solid #555; border-radius:8px; font-size:1rem; cursor:pointer;">NO CARGAR</button>
+            </div>
+            <label style="display:flex; align-items:center; justify-content:center; gap:8px; margin-top:20px; color:#aaa; font-size:0.8rem; cursor:pointer;">
+                <input type="checkbox" id="chkHideWarning" onchange="localStorage.setItem('hideDataWarning', this.checked ? 'true' : 'false')" style="accent-color:#ffaa00; scale:1.2;"> No mostrar de nuevo
+            </label>
+        </div>
+    </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
 
 function mostrarCargaGlobal(mensaje) {
     let gl = document.getElementById('globalLoader');
@@ -206,10 +240,22 @@ function loadMainImage(file, callback) {
     reader.onload = (event) => {
         imgOriginal = new Image();
         imgOriginal.onload = () => {
-            spritesDetectados = []; canvas.width = imgOriginal.width; canvas.height = imgOriginal.height;
-            let rect = scanWrapper.getBoundingClientRect(); let scaleX = (rect.width - 40) / imgOriginal.width; let scaleY = (rect.height - 40) / imgOriginal.height;
-            zoomActual = Math.min(1.0, scaleX, scaleY); if (zoomActual <= 0) zoomActual = 0.1;
-            panX = (rect.width - (imgOriginal.width * zoomActual)) / 2; panY = (rect.height - (imgOriginal.height * zoomActual)) / 2;
+            spritesDetectados = [];
+            if (typeof canvas !== 'undefined' && canvas) {
+                canvas.width = imgOriginal.width; canvas.height = imgOriginal.height;
+            }
+            if (typeof scanWrapper !== 'undefined' && scanWrapper) {
+                let rect = scanWrapper.getBoundingClientRect();
+                let scaleX = (rect.width - 40) / imgOriginal.width;
+                let scaleY = (rect.height - 40) / imgOriginal.height;
+                zoomActual = Math.min(1.0, scaleX, scaleY);
+                if (zoomActual <= 0) zoomActual = 0.1;
+                panX = (rect.width - (imgOriginal.width * zoomActual)) / 2;
+                panY = (rect.height - (imgOriginal.height * zoomActual)) / 2;
+            } else {
+                zoomActual = 1.0;
+                panX = 0; panY = 0;
+            }
             if (typeof actualizarCSSCamera === 'function') actualizarCSSCamera();
             ocultarCargaGlobal();
             if (callback) callback();
