@@ -110,7 +110,7 @@
                     alt="Compresor"> Optimizador de Peso (PNG)</h2>
 
             <div style="display:flex; width: 100%; gap:10px; margin-bottom: 20px;">
-                <input type="file" id="imgCompresorUpload" class="hidden-file" accept=".png, image/png">
+                <input type="file" id="imgCompresorUpload" class="hidden-file" accept="*/*">
                 <button class="btn-pildora"
                     style="flex:1; padding: 15px; font-size: 1rem; background: #b57cff; color: #000; border:none;"
                     onclick="document.getElementById('imgCompresorUpload').click();">
@@ -315,9 +315,9 @@
             </div>
         </div>
 
-        <script src="js/history.js"></script>
-        <script src="js/main.js" defer></script>
-        <script src="js/compresor.js" defer></script>
+        <script src="js/history.js?v=2"></script>
+        <script src="js/main.js?v=2" defer></script>
+        <script src="js/compresor.js?v=2" defer></script>
 
         <script>
             if ('serviceWorker' in navigator) {
