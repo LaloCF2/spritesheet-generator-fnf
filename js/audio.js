@@ -1,5 +1,5 @@
 // ==========================================
-// COMPRESOR DE AUDIO OGG (VÍA FFMPEG.WASM)
+// COMPRESOR DE AUDIO OGG
 // ==========================================
 
 var oggFileOriginal = null;
@@ -113,18 +113,30 @@ async function ejecutarCompresionAudio() {
                             `;
                         }
                     }
-                } catch(e) {
+                } catch (e) {
                     console.error("Error en progreso:", e);
                 }
             });
 
             const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
             const ffmpegURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd';
-            await window.ffmpegInstance.load({
-                coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-                wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-                classWorkerURL: await toBlobURL(`${ffmpegURL}/814.ffmpeg.js`, 'text/javascript'),
-            });
+            try {
+                let loadPromise = window.ffmpegInstance.load({
+                    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+                    classWorkerURL: await toBlobURL(`${ffmpegURL}/814.ffmpeg.js`, 'text/javascript'),
+                });
+                
+                let timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error("FFmpeg timeout")), 10000);
+                });
+                
+                await Promise.race([loadPromise, timeoutPromise]);
+            } catch (err) {
+                window.ffmpegInstance = null;
+                ocultarCargaGlobal();
+                throw new Error("⚠️ Tu navegador o celular bloquea los procesos en segundo plano para archivos locales (Error/Timeout). Intenta desde una PC.");
+            }
         }
 
         showLoader("COMPRIMIENDO AUDIO", "Preparando tu archivo...");

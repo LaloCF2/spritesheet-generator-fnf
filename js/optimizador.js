@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // SECUENCIADOR Y EXPORTACIÓN ZIP
 // ==========================================
 
@@ -61,6 +61,7 @@ document.getElementById('btnAplicarBatch')?.addEventListener('click', () => {
     let casillas = document.querySelectorAll('.frame-checkbox:checked'); if (casillas.length === 0) return alert("❌ Selecciona almenos un frame.");
     casillas.forEach((cb) => { let indice = parseInt(cb.getAttribute('data-index')); spritesDetectados[indice].name = prefijo + "0000"; });
     autoRenumerar(); actualizarDropdownFiltros(); actualizarDropdownPsych(); renderTimelineSecuenciador(); document.getElementById('inputBatchName').value = '';
+    if (typeof dibujarContornos === 'function') dibujarContornos();
 });
 
 document.getElementById('btnSelectAll')?.addEventListener('click', () => { let chks = document.querySelectorAll('.frame-checkbox'); let anyUnchecked = Array.from(chks).some(c => !c.checked); chks.forEach(cb => cb.checked = anyUnchecked); });

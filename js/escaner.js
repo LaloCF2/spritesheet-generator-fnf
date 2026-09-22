@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // MODO ESCANER Y CÁMARA
 // ==========================================
 
@@ -184,10 +184,10 @@ document.getElementById('btnProcesar')?.addEventListener('click', () => {
             }
             if (y < h) {
                 let porcentaje = Math.floor((y / h) * 100);
-                document.getElementById('iaStatusTxt').innerHTML = `<div style="font-size:0.9rem; color:#aaa; margin-bottom:5px;">Analizando Imagen...</div><div style="font-size:2.5rem; font-weight:900; color:var(--accent); text-shadow: 0 0 10px rgba(0,229,255,0.5);">${porcentaje}%</div><div style="font-size:0.8rem; color:#ff4d88; margin-top:5px;">Separando frames.</div>`;
+                document.getElementById('globalLoaderText').innerHTML = `<div style="font-size:0.9rem; color:#aaa; margin-bottom:5px;">Analizando Imagen...</div><div style="font-size:2.5rem; font-weight:900; color:var(--accent); text-shadow: 0 0 10px rgba(0,229,255,0.5);">${porcentaje}%</div><div style="font-size:0.8rem; color:#ff4d88; margin-top:5px;">Separando frames.</div>`;
                 requestAnimationFrame(procesarChunk);
             } else {
-                document.getElementById('iaStatusTxt').innerHTML = `<div style="font-size:1.2rem; font-weight:bold; color:var(--accent-gold);">¡Análisis Completado!</div><div style="font-size:0.8rem; color:#aaa; margin-top:5px;">Procesando coordenadas finales...</div>`;
+                document.getElementById('globalLoaderText').innerHTML = `<div style="font-size:1.2rem; font-weight:bold; color:var(--accent-gold);">¡Análisis Completado!</div><div style="font-size:0.8rem; color:#aaa; margin-top:5px;">Procesando coordenadas finales...</div>`;
                 setTimeout(faseFinal, 50);
             }
         }
