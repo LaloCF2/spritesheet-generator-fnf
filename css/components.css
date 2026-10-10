@@ -561,7 +561,8 @@ body {
 }
 
 .fab-wrap-history,
-.fab-wrap-dark {
+.fab-wrap-dark,
+.fab-wrap-changelog {
     position: fixed;
     z-index: 9999;
 }
@@ -571,6 +572,7 @@ body {
     .fab-wrap-history { bottom: 30px; right: 20px; }
     .fab-wrap-dark { bottom: 100px; right: 20px; }
     .fab-wrap-theme { bottom: 170px; right: 20px; }
+    .fab-wrap-changelog { bottom: 240px; right: 20px; }
 }
 
 /* 2. Posición en Celulares (Pantallas pequeñas) */
@@ -578,4 +580,5 @@ body {
     .fab-wrap-history { bottom: 20px; right: 15px; }
     .fab-wrap-dark { bottom: 85px; right: 15px; }
     .fab-wrap-theme { bottom: 150px; right: 15px; }
+    .fab-wrap-changelog { bottom: 215px; right: 15px; }
 }
