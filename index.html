@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -170,10 +170,25 @@
                     <div class="btn-pildora btn-secundario" style="width: 100%; border-color:#ff3366; color:#ff3366;">
                         Abrir Conversor Atlas</div>
                 </div>
+
+                <div class="home-card" onclick="window.location.href='generador_gif.html'">
+                    <img src="https://cdn-icons-png.flaticon.com/512/1210/1210214.png" class="icon-lg"
+                        style="filter: brightness(0) saturate(100%) invert(73%) sepia(50%) saturate(543%) hue-rotate(170deg) brightness(103%) contrast(101%) drop-shadow(0 0 10px rgba(0,229,255,0.4));"
+                        alt="GIF">
+                    <h3 class="home-title" style="color: var(--accent);">Generador GIF Animado</h3>
+                    <p class="home-desc">Sube imágenes sueltas o un XML+PNG para previsualizar tus animaciones y exportarlas como archivos GIF (sincronizado a los BPM del juego).</p>
+                    <div class="btn-pildora btn-secundario" style="width: 100%; border-color:var(--accent); color:var(--accent);">
+                        Abrir Creador de GIF</div>
+                </div>
             </div>
 
-            <div class="home-footer">
-                &copy; LaloCF 2026 | Versión 1.4.2
+            <div class="home-footer" style="display:flex; flex-direction:column; gap:10px; align-items:center; opacity:0.8; margin-top:40px; padding:20px; border-top:1px solid rgba(255,255,255,0.1);">
+                <button class="btn-pildora btn-secundario" style="font-size: 0.8rem; padding: 5px 15px; border-color: transparent; opacity: 0.8;" onclick="document.getElementById('privacyModal').style.display='flex'">
+                    <img src="https://cdn-icons-png.flaticon.com/128/9703/9703632.png" style="width:16px; filter:invert(1); vertical-align:middle; margin-right:5px;"> Política de Privacidad
+                </button>
+                <div style="font-weight:bold; color:var(--accent); font-size: 0.9rem;">
+                    &copy; LaloCF 2026 | Versión 1.5.0
+                </div>
             </div>
         </div>
 
@@ -221,6 +236,23 @@
                     </ul>
                 </div>
                 <button class="btn-pildora btn-modal-action" onclick="closeWelcomeModal()">¡Comenzar a Crear!</button>
+            </div>
+        </div>
+
+        <div class="overlay-modal" id="privacyModal" style="display: none; z-index: 10002;">
+            <div class="modal-box" style="max-width: 600px;">
+                <h2 class="modal-title" style="color: var(--accent);"><img src="https://cdn-icons-png.flaticon.com/128/9703/9703632.png" style="width:30px; filter:invert(1);"> Política de Privacidad</h2>
+                <div class="modal-body" style="font-size: 0.95rem; line-height: 1.6;">
+                    <p>En <b>Spritesheet Generator FNF'</b> nos tomamos muy en serio tu privacidad y la seguridad de tus proyectos artísticos.</p>
+                    <ul class="modal-list" style="margin-top: 15px;">
+                        <li><b style="color: #00e5ff;">Procesamiento Local:</b> Absolutamente todos los archivos que importas (imágenes PNG, documentos XML, archivos de audio OGG o datos JSON) son procesados directamente en la memoria RAM de tu navegador web.</li>
+                        <li><b style="color: #ff3366;">Sin Servidores:</b> Esta herramienta no cuenta con una base de datos centralizada, por lo tanto, ningún archivo, sprite o información personal es enviada, subida, o guardada en servidores externos o en la nube.</li>
+                        <li><b style="color: #ffaa00;">Tus Derechos:</b> Tus creaciones, mods y arte original te pertenecen al 100%. Nosotros no retenemos copias de lo que generas en la plataforma.</li>
+                        <li><b style="color: #b57cff;">Seguridad Efímera:</b> En el momento en que recargas la página o cierras la pestaña de tu navegador, toda la información importada y modificada es eliminada de manera permanente de la memoria temporal.</li>
+                    </ul>
+                    <p style="margin-top: 15px; color: #aaa; text-align: center; font-size: 0.8rem;">Al utilizar nuestras herramientas, tienes la total seguridad de que tu trabajo está completamente protegido del escrutinio público.</p>
+                </div>
+                <button class="btn-pildora btn-modal-action" style="background: var(--accent); border-color: var(--accent); color: #000;" onclick="document.getElementById('privacyModal').style.display='none'">¡Entendido!</button>
             </div>
         </div>
 
