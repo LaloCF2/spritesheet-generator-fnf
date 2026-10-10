@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // 8. history.js - AUTOGUARDADO EN INDEXEDDB
 // ==========================================
 
@@ -58,7 +58,28 @@ const HistoryDB = {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-    HistoryDB.init().catch(console.error);
+    HistoryDB.init().then(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('loadSession');
+        if (sessionId) {
+            // Remove parameter from URL so it doesn't loop on manual refresh
+            window.history.replaceState({}, document.title, window.location.pathname);
+            setTimeout(() => {
+                window.restoreHistorySession(sessionId);
+            }, 800);
+        }
+    }).catch(console.error);
+    
+    // Auto-save triggers
+    setInterval(() => {
+        if (typeof window.autoSaveHistory === 'function') window.autoSaveHistory();
+    }, 60000); // Save every 1 minute
+    
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === 'hidden' && typeof window.autoSaveHistory === 'function') {
+            window.autoSaveHistory();
+        }
+    });
 });
 
 window.autoSaveHistory = function() {
@@ -71,10 +92,15 @@ window.autoSaveHistory = function() {
         if (window.oggFileName) fileName = window.oggFileName;
     } else if (window.appMode === 'ATLAS') {
         if (window.atlasPngFileName) fileName = window.atlasPngFileName;
+    } else if (window.appMode === 'GIF_MAKER') {
+        fileName = "Animación GIF";
     }
 
+    // Only save if there's actually a mode set (prevents empty saves on HOME)
+    if (!window.appMode || window.appMode === 'HOME') return;
+
     let data = {
-        appMode: window.appMode || 'HOME',
+        appMode: window.appMode,
         dateString: new Date().toLocaleString(),
         fileName: fileName
     };
@@ -95,6 +121,15 @@ window.autoSaveHistory = function() {
         if(window.atlasAnimObj) data.atlasAnimObj = window.atlasAnimObj;
         if(window.atlasJsonObj) data.atlasJsonObj = window.atlasJsonObj;
         if(window.atlasPngImg && window.atlasPngImg.src.startsWith('data:')) data.atlasPngImgSrc = window.atlasPngImg.src;
+    }
+    
+    // Guardar estado de GIF Maker
+    if(window.appMode === 'GIF_MAKER') {
+        if(window.framesPreRenderizados && window.framesPreRenderizados.length > 0) {
+            data.framesPreRenderizados = window.framesPreRenderizados;
+        } else {
+            return; // Don't save empty GIF sessions
+        }
     }
     
     HistoryDB.saveSession(data);
@@ -151,6 +186,12 @@ window.showHistoryModal = async function() {
     
     if(html === '') {
         html = '<p style="text-align:center; color:var(--text-muted);">No hay sesiones activas guardadas.</p>';
+    } else {
+        html += `
+            <div style="margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 15px;">
+                <button class="btn-pildora" onclick="deleteAllHistorySessions()" style="width: 100%; background: linear-gradient(135deg, #ff4757, #ff6b81);"><img src="https://cdn-icons-png.flaticon.com/128/3405/3405244.png" class="icon-sm icon-white" alt="Eliminar"> Borrar Todo el Historial</button>
+            </div>
+        `;
     }
     
     content.innerHTML = html;
@@ -161,10 +202,39 @@ window.closeHistoryModal = function() {
     if(mod) mod.style.display = 'none';
 };
 
+window.deleteAllHistorySessions = async function() {
+    if(confirm("¡ATENCIÓN!\n\n¿Estás completamente seguro de que deseas borrar TODAS las sesiones guardadas en el historial?\n\nEsta acción es irreversible y perderás cualquier trabajo pendiente.")) {
+        let sessions = await HistoryDB.loadAllSessions();
+        for (let session of sessions) {
+            await HistoryDB.deleteSession(session.id);
+        }
+        showHistoryModal(); // Refresh modal
+    }
+};
+
 window.restoreHistorySession = async function(id) {
     closeHistoryModal();
     let session = await HistoryDB.loadSessionById(id);
     if(!session) return;
+    
+    // Detectar a qué página pertenece la sesión
+    let targetPage = '';
+    if(session.appMode === 'SCAN') targetPage = 'escaner.html';
+    else if(session.appMode === 'EDIT') targetPage = 'optimizador.html';
+    else if(session.appMode === 'COMPRESS') targetPage = 'compresor.html';
+    else if(session.appMode === 'AUDIO') targetPage = 'audio.html';
+    else if(session.appMode === 'ATLAS') targetPage = 'atlas.html';
+    else if(session.appMode === 'PSYCH') targetPage = 'psych.html';
+    else if(session.appMode === 'GIF_MAKER') targetPage = 'gif_xml.html';
+    
+    // Si la página actual no es la correcta, redirigir
+    let currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    if(currentPage === '') currentPage = 'index.html'; // Fallback
+    
+    if (targetPage !== '' && currentPage !== targetPage) {
+        window.location.href = targetPage + '?loadSession=' + id;
+        return;
+    }
     
     if(typeof showLoader === 'function') showLoader("RESTAURANDO", "Cargando sesión previa...");
     
@@ -220,6 +290,34 @@ window.restoreHistorySession = async function(id) {
                 ocultarCargaGlobal();
             }
             if(typeof window.initMode === 'function') window.initMode('ATLAS');
+        } else if (session.appMode === 'GIF_MAKER') {
+            if(session.framesPreRenderizados) {
+                window.framesPreRenderizados = session.framesPreRenderizados;
+                
+                // Tratar de abrir el modo de previsualización (es diferente en cada página hija pero genérico)
+                let workspace = document.getElementById('gifWorkspace');
+                if(workspace) workspace.style.display = 'flex';
+                
+                let seq = document.getElementById('gifSequencer');
+                if(seq) seq.style.display = 'block';
+                
+                let prevBox = document.querySelector('.preview-box');
+                if(prevBox) prevBox.style.display = 'block';
+                
+                let ph = document.getElementById('previewPlaceholder');
+                if(ph) ph.style.display = 'none';
+                
+                let pimg = document.getElementById('previewGifImg');
+                if(pimg) pimg.style.display = 'block';
+                
+                let btn = document.getElementById('btnGenerarGif');
+                if(btn) btn.style.display = 'block';
+                
+                if(typeof window.renderizarSecuenciadorGif === 'function') window.renderizarSecuenciadorGif();
+                if(typeof window.actualizarBPM === 'function') window.actualizarBPM();
+            }
+            if(typeof window.initMode === 'function') window.initMode('GIF_MAKER');
+            ocultarCargaGlobal();
         } else {
             if(typeof window.initMode === 'function') window.initMode(session.appMode);
             ocultarCargaGlobal();

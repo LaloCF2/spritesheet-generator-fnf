@@ -1,7 +1,51 @@
 // ==========================================
 // NÚCLEO GLOBAL, VARIABLES Y FUNCIONES
 // ==========================================
-const CURRENT_VERSION = '1.4';
+const CURRENT_VERSION = '1.5.0';
+
+window.showChangelog = function(onlyLatest = false) {
+    let modChangelog = document.getElementById('changelogModal');
+    if (!modChangelog) return;
+    
+    // Si aún no está cargado el dato, inyectar el script y esperar
+    if (typeof CHANGELOG_DATA === 'undefined') {
+        let script = document.createElement('script');
+        script.src = 'js/changelog.js?v=' + CURRENT_VERSION;
+        script.onload = () => window.showChangelog(onlyLatest);
+        document.head.appendChild(script);
+        return;
+    }
+    
+    // Generar HTML dinámico basado en CHANGELOG_DATA
+    let html = `<h2 class="modal-title" style="color: var(--accent-gold);"><img src="https://cdn-icons-png.flaticon.com/128/3067/3067425.png" style="width:30px; filter:invert(1);"> Historial de Versiones</h2>
+                <div class="modal-body" style="text-align: left; max-height: 60vh; overflow-y: auto; padding-right: 10px;">`;
+                
+    let dataToShow = onlyLatest ? [CHANGELOG_DATA[0]] : CHANGELOG_DATA;
+                
+    dataToShow.forEach((log, index) => {
+        let isLatest = (log.version === CURRENT_VERSION);
+        let borderColor = isLatest ? 'var(--accent-gold)' : 'rgba(255,255,255,0.1)';
+        let titleColor = isLatest ? 'var(--accent-gold)' : '#ddd';
+        let extraTag = log.date ? `<span style="font-size:0.7rem; background:#333; padding:2px 6px; border-radius:4px; margin-left:10px; vertical-align:middle;">${log.date}</span>` : '';
+        
+        html += `<div style="border: 1px solid ${borderColor}; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.3);">
+                    <h3 style="color: ${titleColor}; margin-top: 0; margin-bottom: 10px; font-size: 1.2rem; display:flex; align-items:center;">Versión ${log.version} ${isLatest ? '✨' : ''} ${extraTag}</h3>
+                    <ul class="modal-list" style="margin: 0;">`;
+        
+        log.changes.forEach(change => {
+            html += `<li style="margin-bottom: 8px; line-height: 1.4;">${change}</li>`;
+        });
+        
+        html += `   </ul>
+                 </div>`;
+    });
+    
+    html += `</div>
+             <button class="btn-pildora btn-modal-action" style="background: linear-gradient(135deg, #b38f00, #665200); border-color: var(--accent-gold); margin-top: 15px;" onclick="closeChangelogModal()">¡Entendido!</button>`;
+             
+    modChangelog.querySelector('.modal-box').innerHTML = html;
+    modChangelog.style.display = 'flex';
+};
 
 window.onload = () => {
     const savedTheme = localStorage.getItem('iasprite_theme') || 'cyberpunk';
@@ -18,8 +62,20 @@ window.onload = () => {
         let modWelcome = document.getElementById('welcomeModal');
         if (modWelcome) modWelcome.style.display = 'flex';
     } else if (lastVersion !== CURRENT_VERSION) {
-        let modChangelog = document.getElementById('changelogModal');
-        if (modChangelog) modChangelog.style.display = 'flex';
+        window.showChangelog(true);
+    }
+    
+    // Inyectar botón de Changelog globalmente si existe fab-wrap-theme
+    let hasFab = document.querySelector('.fab-wrap-theme');
+    if (hasFab) {
+        let changelogFab = document.createElement('div');
+        changelogFab.className = 'fab-wrap-changelog';
+        changelogFab.innerHTML = `
+            <button class="fab-btn changelog-btn" onclick="window.showChangelog(false)" title="Novedades y Cambios" style="background: rgba(0,229,255,0.6);">
+                <img src="https://cdn-icons-png.flaticon.com/128/3067/3067425.png" class="icon-sm icon-black" alt="Novedades">
+            </button>
+        `;
+        document.body.appendChild(changelogFab);
     }
 
     setTimeout(() => {
@@ -73,6 +129,11 @@ function mostrarCargaGlobal(mensaje) {
 function ocultarCargaGlobal() {
     let gl = document.getElementById('globalLoader');
     if (gl) gl.classList.add('hidden');
+    
+    // Auto-guardar historial después de cualquier carga importante (ej. importar archivo)
+    if (typeof window.autoSaveHistory === 'function') {
+        setTimeout(window.autoSaveHistory, 1000);
+    }
 }
 
 window.closeWelcomeModal = function () {
