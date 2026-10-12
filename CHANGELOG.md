@@ -1,9 +1,17 @@
 # Spritesheet Generator FNF - Historial de Versiones
 
-## Versión 1.5.0 (Actual)
+## Versión 1.5.1 (Actual)
+- **[MEJORA] Generador de GIF Animado:** Estas mejoras solo estan para esa funcion.
+- **[MEJORA] Arquitectura:** Separación de herramientas en múltiples archivos HTML para carga más rápida y mejor rendimiento en dispositivos móviles.
+- **[MEJORA] Sincronización Musical BPM:** Mejora el ajuste de delays por frame en centisegundos para que los GIFs encajen perfectamente con cualquier canción sin repetir frames innecesariamente.
+- **[MEJORA] Sistema de recortes:** Mejoras al realizar cajas o recortes para mejor facilidad.
+- **[CORRECCION]** Corrección de errores y mejoras generales de rendimiento.
+
+## Versión 1.5.0
 - **[NUEVO] Generador de GIF Animado:** Crea GIFs a partir de archivos sueltos, spritesheets solos, o combinaciones de XML+PNG sincronizados a los BPM de Friday Night Funkin'.
 - **[MEJORA] Autoguardado:** Sistema de guardado automático en caché periódico y al minimizar la aplicación para evitar pérdida de progreso.
 - **[MEJORA] Arquitectura:** Separación de herramientas en múltiples archivos HTML para carga más rápida y mejor rendimiento en dispositivos móviles.
+- **[MEJORA] Sincronización Musical BPM Precisa:** Eliminado el redondeo forzado a FPS enteros que provocaba velocidades idénticas en BPMs cercanos (105 vs 106). Nuevo motor de tiempo musical continuo basado en milisegundos exactos de beat (60,000 / BPM), selector de compás (1 Beat, 2 Beats, 4 Beats, 1/2 Beat, 1 Step por frame), pulso LED visual, claqueta/metrónomo auditivo opcional y ajuste de centisegundos en el GIF exportado para sincronización perfecta con cualquier canción.
 - **[NUEVO] Política de Privacidad:** Se añadió una sección de política de privacidad clara al pie de la página principal.
 
 ## Versión 1.4.3

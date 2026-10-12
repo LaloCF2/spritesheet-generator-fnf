@@ -108,24 +108,90 @@
         }
 
         .bpm-slider-container {
-            background: rgba(0,0,0,0.5);
-            padding: 15px;
-            border-radius: 8px;
+            background: rgba(18, 19, 32, 0.85);
+            border: 1px solid rgba(0, 229, 255, 0.25);
+            padding: 16px;
+            border-radius: 12px;
             display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
         }
 
         .slider-label {
             flex-shrink: 0;
             color: #fff;
             font-weight: bold;
+            font-size: 0.95rem;
         }
 
         input[type=range] {
             flex-grow: 1;
             accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .btn-step-bpm {
+            width: 34px;
+            height: 34px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .btn-step-bpm:hover {
+            background: var(--accent);
+            color: #0c0d14;
+            border-color: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .btn-rhythm {
+            background: rgba(255, 255, 255, 0.06);
+            color: #bbb;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-rhythm:hover {
+            background: rgba(0, 229, 255, 0.15);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .btn-rhythm.active {
+            background: var(--accent);
+            color: #0c0d14;
+            border-color: var(--accent);
+            font-weight: bold;
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.45);
+        }
+
+        .beat-pulse-active {
+            background-color: var(--accent) !important;
+            border-color: #fff !important;
+            box-shadow: 0 0 14px var(--accent), 0 0 25px var(--accent) !important;
+            transform: scale(1.35) !important;
         }
     </style>
 </head>
@@ -174,14 +240,12 @@
             <div class="window-content" id="win-gif">
                 <p style="color: #aaa; margin-bottom: 20px; font-size:0.9rem;">Sube tu hoja de sprites (.png) para crear la animación desde cero.</p>
 
-                <div id="fileInputsContainer" style="display:flex; flex-direction:column; gap:15px; margin-bottom: 20px;">
+                <div id="fileInputsContainer" style="display:flex; width: 100%; gap:10px; margin-bottom: 15px;">
                     <input type="file" id="gifPngUnicoUpload" class="hidden-file" accept="*/*" style="display:none;">
-                    <button class="btn-pildora" style="width:100%; padding: 25px; font-size: 1.2rem; background: #31b0d1; color: #000; border:none; display:flex; align-items:center; justify-content:center; gap:15px; box-shadow: 0 4px 15px rgba(49, 176, 209, 0.4);" onclick="document.getElementById('gifPngUnicoUpload').click();">
-                        <img src="https://cdn-icons-png.flaticon.com/512/716/716784.png" class="icon icon-black" alt="Upload" style="width:40px; height:40px;"> 
-                        <div style="text-align:left;">
-                            <b>CARGAR HOJA DE SPRITES (PNG)</b><br>
-                            <span style="font-size:0.9rem; opacity:0.8;">Soporta navegación sin límite (Android)</span>
-                        </div>
+                    <button class="btn-pildora btn-secundario" id="btnCargarPngGif" style="flex:1; padding: 15px; font-size: 1rem;"
+                        onclick="document.getElementById('gifPngUnicoUpload').click();">
+                        <img src="https://cdn-icons-png.flaticon.com/512/716/716784.png" class="icon" alt="Upload">
+                        <span id="txtCargarPngGif">SELECCIONAR HOJA DE SPRITES PNG</span>
                     </button>
                 </div>
 
@@ -194,26 +258,144 @@
                         </select>
                     </div>
 
-                    <!-- BPM / Velocidad Control -->
-                    <div class="bpm-slider-container">
-                        <div class="slider-label">Sincronización BPM (FNF): <span id="lblBpm">100</span> BPM</div>
-                        <input type="range" id="sliderBpm" min="60" max="300" value="100" oninput="actualizarBPM()">
-                        <div style="color:#aaa; font-size:0.8rem; margin-left:10px;" id="lblFps">(= 24 FPS)</div>
-                    </div>
-                    
-                    <!-- MODO B: CORTADOR INTERACTIVO -->
+                    <!-- MODO B: CORTADOR INTERACTIVO (Estilo Escaner) -->
                     <div id="gifCropContainer" style="display:none; margin-bottom: 20px;">
-                        <label style="color:#fff; font-weight:bold; margin-bottom:10px; display:block;">Dibuja recuadros sobre los cuadros que deseas animar, en orden:</label>
-                        <div style="position:relative; overflow:auto; max-height:400px; border:2px dashed #31b0d1; border-radius:8px; background:rgba(0,0,0,0.5);">
-                            <canvas id="gifCropCanvas" style="cursor:crosshair; touch-action:none;"></canvas>
+                        
+                        <h3 style="color:var(--text); font-size:0.9rem; margin: 10px 0 0 0; display:flex; align-items:center;"><img
+                                src="https://cdn-icons-png.flaticon.com/512/1041/1041985.png" class="icon" alt="Tools"> Herramientas
+                            para Editar</h3>
+
+                        <div class="mode-toggle-bar">
+                            <button class="mode-btn active" id="btnNavegarGif" onclick="setGlobalModeGif('VIEW')"><img
+                                    src="https://cdn-icons-png.flaticon.com/512/1004/1004077.png" class="icon icon-no-margin"
+                                    style="margin-bottom:4px;" alt="Mover"> Modo Vista<br><small
+                                    style="font-size:0.7rem;font-weight:normal;">1 dedo: Mover / 2 dedos: Zoom (+ -)</small></button>
+                            <button class="mode-btn" id="btnEditarGif" onclick="setGlobalModeGif('EDIT')"><img
+                                    src="https://cdn-icons-png.flaticon.com/512/1827/1827933.png" class="icon icon-no-margin"
+                                    style="margin-bottom:4px;" alt="Editar"> Modo Edición<br><small
+                                    style="font-size:0.7rem;font-weight:normal;">Selecciona y ajusta a tu manera</small></button>
                         </div>
-                        <div style="display:flex; gap:10px; margin-top:10px;">
-                            <button class="btn-pildora btn-secundario" style="flex:1; border-color:#ff3366; color:#ff3366;" onclick="limpiarCajasGif()">Borrar Recuadros</button>
-                            <button class="btn-pildora btn-primario" style="flex:2; background:#31b0d1; color:#000; border-color:#31b0d1;" onclick="extraerFramesGif()">Extraer y Secuenciar</button>
+
+                        <div class="scan-manual-tools" id="manualToolsDivGif" style="opacity: 0.5; pointer-events: none;">
+                            <button class="tool-btn active" id="btnToolSelectGif" onclick="setScanToolGif('SELECT')"><img
+                                    src="https://cdn-icons-png.flaticon.com/128/25/25643.png" class="icon" alt="Seleccionar">
+                                Seleccionar</button>
+                            <button class="tool-btn" id="btnToolDrawGif" onclick="setScanToolGif('DRAW')"><img
+                                    src="https://cdn-icons-png.flaticon.com/128/13738/13738992.png" class="icon" alt="Dibujar">
+                                Dibujar Caja</button>
+                            <button class="tool-btn" id="btnToolSnapGif" onclick="autoFitSelectedGif()"
+                                style="color: black; background: var(--accent-gold); border-color: white;"><img
+                                    src="https://cdn-icons-png.flaticon.com/128/2040/2040504.png" class="icon icon-black"
+                                    alt="Snap"> Auto-Ajustar (Snap)</button>
+                            <button class="tool-btn" id="btnToolDeleteGif" onclick="setScanToolGif('DELETE')" style="color: #ff4d88;"><img
+                                    src="https://cdn-icons-png.flaticon.com/512/484/484611.png" class="icon"
+                                    style="filter: brightness(0) saturate(100%) invert(32%) sepia(97%) saturate(2250%) hue-rotate(327deg) brightness(101%) contrast(106%);"
+                                    alt="Borrar"> Borrar</button>
+                        </div>
+
+                        <div class="panel-zoom">
+                            <button class="btn-zoom" id="btnZoomOutGif"><img
+                                    src="https://cdn-icons-png.flaticon.com/128/2740/2740679.png" class="icon-sm" alt="-"></button>
+                            <span id="txtZoomGif" style="font-weight:bold; width: 60px; text-align: center;">100%</span>
+                            <button class="btn-zoom" id="btnZoomInGif"><img
+                                    src="https://cdn-icons-png.flaticon.com/128/3303/3303893.png" class="icon-sm" alt="+"></button>
+
+                            <select id="bgScannerSelectGif" onchange="changeScannerBgGif(this.value)" class="inner-glass-box">
+                                <option value="bg-check-dark">Fondo Transparente Oscuro</option>
+                                <option value="bg-check-light">Fondo Transparente Claro</option>
+                                <option value="bg-solid-white">Fondo Blanco Sólido</option>
+                                <option value="bg-solid-dark">Fondo Oscuro Sólido</option>
+                            </select>
+                        </div>
+
+                        <div class="canvas-wrapper bg-check-dark" id="cropCanvasWrapper">
+                            <canvas id="gifCropCanvas"></canvas>
+                        </div>
+
+                        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; align-items:center;">
+                            <button class="btn-pildora btn-secundario" id="btnClearScanGif"
+                                style="border-color:#990033; color:#ff4d88;" onclick="limpiarCajasGif()"><img
+                                    src="https://cdn-icons-png.flaticon.com/512/484/484611.png" class="icon"
+                                    style="filter: brightness(0) saturate(100%) invert(32%) sepia(97%) saturate(2250%) hue-rotate(327deg) brightness(101%) contrast(106%);"
+                                    alt="Limpiar"> Borrar Todo</button>
+                            
+                            <div id="lblContadorFramesGif" class="inner-glass-box" style="padding:10px 16px; font-weight:bold; font-size:0.9rem; color:var(--text); display:flex; align-items:center; gap:6px;">
+                                <img src="https://cdn-icons-png.flaticon.com/128/833/833281.png" class="icon-sm" alt="Frames">
+                                <span id="txtContadorFramesGif">0 Frames</span>
+                            </div>
+
+                            <button class="btn-pildora btn-primario" id="btnExtraerFrames"
+                                style="flex:1; min-width:200px; background:#31b0d1; color:#000; border:none; font-weight:bold; padding:12px 20px; display:flex; align-items:center; justify-content:center; gap:8px;"
+                                onclick="extraerFramesGif()">
+                                <span>Continuar al Secuenciador</span>
+                                <img src="https://cdn-icons-png.flaticon.com/128/271/271228.png" style="width:16px;" alt="Next">
+                            </button>
                         </div>
                     </div>
 
-                    <div class="preview-box">
+                    <!-- BPM / Sincronización Musical Precisa -->
+                    <div class="bpm-slider-container" id="bpmContainerGif" style="display:none;">
+                        <!-- Cabecera: Título + Pulso LED + Audio Metrónomo -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; width:100%; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="font-size:1.05rem; font-weight:bold; color:var(--accent);">🎵 Sincronización de Ritmo BPM</span>
+                                <div id="beatIndicatorLed" title="Pulso del Golpe de Compás (Beat)" style="width:14px; height:14px; border-radius:50%; background:#222; border:2px solid #555; transition: transform 0.05s, box-shadow 0.05s, background-color 0.05s;"></div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <button type="button" id="btnMetronomoAudio" class="btn-pildora btn-secundario" style="padding:4px 12px; font-size:0.8rem; height:32px;" onclick="toggleMetronomoAudio()" title="Activar/desactivar clic sonoro para verificar con tu música">
+                                    🔈 Escuchar Beat
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Fila BPM: Slider continuo + Steppers + Input Numérico Directo -->
+                        <div style="display:flex; align-items:center; gap:10px; width:100%; margin-top:2px; flex-wrap:wrap;">
+                            <span class="slider-label" style="min-width:55px;">Tempo:</span>
+                            <button type="button" class="btn-step-bpm" onclick="ajustarBpmRelativo(-1)" title="Restar 1 BPM">-</button>
+                            <input type="range" id="sliderBpm" min="40" max="300" step="1" value="100" oninput="onInputSliderBpm(this.value)" style="flex:1; min-width:140px;">
+                            <button type="button" class="btn-step-bpm" onclick="ajustarBpmRelativo(+1)" title="Sumar 1 BPM">+</button>
+                            <div style="display:flex; align-items:center; gap:5px; background:rgba(0,0,0,0.4); padding:4px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.15);">
+                                <input type="number" id="inputBpmNum" min="40" max="300" step="1" value="100" oninput="onInputChangeBpmNum(this.value)" style="width:55px; background:transparent; border:none; color:var(--accent); font-weight:bold; font-size:1.05rem; text-align:center; outline:none;">
+                                <span style="color:#aaa; font-size:0.85rem; font-weight:bold;">BPM</span>
+                            </div>
+                            <span id="lblBpm" style="display:none;">100</span>
+                        </div>
+
+                        <!-- Selector de División de Ritmo Musical -->
+                        <div style="display:flex; flex-direction:column; gap:8px; width:100%; margin-top:4px; background:rgba(0,0,0,0.25); padding:10px; border-radius:8px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:5px;">
+                                <span style="font-size:0.85rem; color:#ccc; font-weight:bold;">Sincronizar ciclo completo de la animación a:</span>
+                                <span id="lblDuracionDetalle" style="font-size:0.82rem; color:var(--accent); font-weight:bold;">1 Beat = 600.0 ms</span>
+                            </div>
+                            <div class="rhythm-selector-group" id="rhythmSelectorGroup" style="display:flex; flex-wrap:wrap; gap:8px;">
+                                <button type="button" class="btn-rhythm active" data-beats="1" onclick="cambiarModoRitmo(1, this)">
+                                    ⚡ 1 Beat (FNF Standard)
+                                </button>
+                                <button type="button" class="btn-rhythm" data-beats="2" onclick="cambiarModoRitmo(2, this)">
+                                    ↔️ 2 Beats (Izq / Der)
+                                </button>
+                                <button type="button" class="btn-rhythm" data-beats="4" onclick="cambiarModoRitmo(4, this)">
+                                    🎼 4 Beats (Compás)
+                                </button>
+                                <button type="button" class="btn-rhythm" data-beats="0.5" onclick="cambiarModoRitmo(0.5, this)">
+                                    ⏩ 1/2 Beat (Rápido)
+                                </button>
+                                <button type="button" class="btn-rhythm" data-beats="step" onclick="cambiarModoRitmo('step', this)">
+                                    👟 1 Step por Frame
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Métricas de Tiempo Musical en Tiempo Real -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; width:100%; font-size:0.82rem; color:#aaa; flex-wrap:wrap; gap:10px; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
+                            <div>⏱️ Duración ciclo: <span id="lblCicloTotalMs" style="color:#fff; font-weight:bold;">600.0 ms</span></div>
+                            <div>🎞️ Velocidad frame: <span id="lblMsPerFrame" style="color:#fff; font-weight:bold;">42.86 ms/f</span></div>
+                            <div id="lblFpsEquiv" style="color:var(--accent-pink); font-size:0.78rem;">Precisión continua musical</div>
+                            <span id="lblFps" style="display:none;">(= 24 FPS)</span>
+                        </div>
+                    </div>
+
+                    <div class="preview-box" id="previewBoxGif" style="display:none;">
                         <div style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); padding:5px 10px; border-radius:5px; color:#fff; font-size:0.8rem; font-weight:bold;" id="txtFrameCount">0 Frames</div>
                         <img id="previewGifImg" src="" style="display:none;">
                         <div id="previewPlaceholder" style="color:#666; font-weight:bold; font-size:1.2rem;">VISTA PREVIA</div>
@@ -225,6 +407,9 @@
                         <div id="gifSequencerTrack" style="display:flex; overflow-x:auto; background:rgba(0,0,0,0.4); padding:15px; border-radius:8px; gap:15px; min-height:120px; align-items:center;">
                             <!-- Se inyecta desde js -->
                         </div>
+                        <button class="btn-pildora btn-secundario" id="btnVolverACortador" style="margin-top:15px; width:100%; display:none;" onclick="volverACortadorGif()">
+                            <img src="https://cdn-icons-png.flaticon.com/512/1827/1827933.png" class="icon" alt="Editar"> Reajustar Cajas / Agregar Más Frames en Escáner
+                        </button>
                     </div>
 
                     <button class="btn-pildora btn-primario" id="btnGenerarGif" style="width:100%; font-size:1.2rem; padding:15px; display:none;" onclick="generarGif()">
