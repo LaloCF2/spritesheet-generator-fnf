@@ -1,5 +1,5 @@
 /* ==========================================
-   CAJAS DE CRISTAL INTERNAS (INNER GLASS)
+   CAJAS DE CRISTAL INTERNAS
 ========================================== */
 .inner-glass-box {
     background: rgba(255, 255, 255, 0.1);
@@ -375,7 +375,10 @@ body {
 ========================================== */
 .global-loader {
     position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     background: rgba(0, 0, 0, 0.45);
@@ -569,16 +572,46 @@ body {
 
 /* 1. Posición en PC y Tablets (Pantallas grandes) */
 @media (min-width: 769px) {
-    .fab-wrap-history { bottom: 30px; right: 20px; }
-    .fab-wrap-dark { bottom: 100px; right: 20px; }
-    .fab-wrap-theme { bottom: 170px; right: 20px; }
-    .fab-wrap-changelog { bottom: 240px; right: 20px; }
+    .fab-wrap-history {
+        bottom: 30px;
+        right: 20px;
+    }
+
+    .fab-wrap-dark {
+        bottom: 100px;
+        right: 20px;
+    }
+
+    .fab-wrap-theme {
+        bottom: 170px;
+        right: 20px;
+    }
+
+    .fab-wrap-changelog {
+        bottom: 240px;
+        right: 20px;
+    }
 }
 
 /* 2. Posición en Celulares (Pantallas pequeñas) */
 @media (max-width: 768px) {
-    .fab-wrap-history { bottom: 20px; right: 15px; }
-    .fab-wrap-dark { bottom: 85px; right: 15px; }
-    .fab-wrap-theme { bottom: 150px; right: 15px; }
-    .fab-wrap-changelog { bottom: 215px; right: 15px; }
+    .fab-wrap-history {
+        bottom: 20px;
+        right: 15px;
+    }
+
+    .fab-wrap-dark {
+        bottom: 85px;
+        right: 15px;
+    }
+
+    .fab-wrap-theme {
+        bottom: 150px;
+        right: 15px;
+    }
+
+    .fab-wrap-changelog {
+        bottom: 215px;
+        right: 15px;
+    }
 }

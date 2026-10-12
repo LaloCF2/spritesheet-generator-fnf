@@ -118,8 +118,8 @@ body.dark-mode .home-card:hover {
 
 .canvas-wrapper {
     width: 100%;
-    height: 50vh;
-    min-height: 350px;
+    height: 52vh;
+    min-height: 380px;
     border: 2px solid white;
     border-radius: 16px;
     overflow: hidden;
@@ -129,13 +129,31 @@ body.dark-mode .home-card:hover {
     box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
 }
 
-canvas#canvasSprites {
+canvas#canvasSprites, canvas#gifCropCanvas {
     position: absolute;
     top: 0;
     left: 0;
     transform-origin: 0 0;
     touch-action: none;
     image-rendering: pixelated;
+}
+
+.canvas-wrapper.bg-check-dark, .canvas-wrapper.bg-checker {
+    background: repeating-conic-gradient(#202028 0% 25%, #181820 0% 50%) 50% / 20px 20px !important;
+    background-color: #1a1a24 !important;
+}
+
+.canvas-wrapper.bg-check-light {
+    background: repeating-conic-gradient(#f0f0f0 0% 25%, #e0e0e0 0% 50%) 50% / 20px 20px !important;
+    background-color: #ffffff !important;
+}
+
+.canvas-wrapper.bg-solid-white {
+    background: #ffffff !important;
+}
+
+.canvas-wrapper.bg-solid-dark {
+    background: #11111a !important;
 }
 
 .panel-zoom {
@@ -171,18 +189,45 @@ canvas#canvasSprites {
     transform: scale(1.1);
 }
 
-#txtZoom {
+#txtZoom, #txtZoomGif {
     color: var(--text);
 }
 
-#bgScannerSelect {
+#bgScannerSelect, #bgScannerSelectGif {
     background: rgba(255, 255, 255, 0.7);
     border: 1px solid white;
     color: var(--text);
-    padding: 8px;
+    padding: 8px 12px;
     border-radius: 8px;
     font-weight: bold;
     outline: none;
+    cursor: pointer;
+}
+
+body.dark-mode #bgScannerSelect, body.dark-mode #bgScannerSelectGif {
+    background: rgba(0, 0, 0, 0.6);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+body.dark-mode .btn-zoom {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+body.dark-mode .btn-zoom img {
+    filter: brightness(0) invert(1);
+}
+
+body.dark-mode .tool-btn:not(.active) {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+body.dark-mode .tool-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.16);
 }
 
 /* ==========================================
