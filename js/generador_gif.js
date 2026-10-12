@@ -11,25 +11,27 @@ function seleccionarModo(modo) {
     let card = document.getElementById('cardModo' + modo);
     if (card) card.classList.add('selected');
 
-    document.getElementById('fileInputsContainer').style.display = 'block';
+    let cont = document.getElementById('fileInputsContainer');
+    if (cont) cont.style.display = 'flex';
     let dropText = "";
     
+    let inputArchivos = document.getElementById('gifInputArchivos');
     if (modo === 'A') {
         dropText = "Sube tus imágenes sueltas (.png, .jpg)";
-        document.getElementById('gifInputArchivos').accept = "image/*";
-        document.getElementById('gifInputArchivos').multiple = true;
+        if (inputArchivos) { inputArchivos.accept = "image/*"; inputArchivos.multiple = true; }
     } else if (modo === 'B') {
         dropText = "Sube tu hoja de sprites (.png)";
-        document.getElementById('gifInputArchivos').accept = "image/png, image/jpeg";
-        document.getElementById('gifInputArchivos').multiple = false;
+        if (inputArchivos) { inputArchivos.accept = "image/png, image/jpeg"; inputArchivos.multiple = false; }
     } else if (modo === 'C') {
         dropText = "Sube tu XML y tu PNG juntos";
-        document.getElementById('gifInputArchivos').accept = "*/*";
-        document.getElementById('gifInputArchivos').multiple = true;
+        if (inputArchivos) { inputArchivos.accept = "*/*"; inputArchivos.multiple = true; }
     }
     
-    document.getElementById('gifDropZoneText').innerText = dropText;
-    document.getElementById('gifWorkspace').style.display = 'none';
+    let dropTextEl = document.getElementById('gifDropZoneText');
+    if (dropTextEl) dropTextEl.innerText = dropText;
+    
+    let ws = document.getElementById('gifWorkspace');
+    if (ws && !imgSpritesheet && archivosSueltos.length === 0) ws.style.display = 'none';
     
     // Reseteamos datos
     archivosSueltos = [];
@@ -37,7 +39,8 @@ function seleccionarModo(modo) {
     xmlDoc = null;
     spritesXML = [];
     animacionesDisponibles = {};
-    document.getElementById('selectAnimacionXML').innerHTML = '<option value="">Carga un XML primero...</option>';
+    let selectAnim = document.getElementById('selectAnimacionXML');
+    if (selectAnim) selectAnim.innerHTML = '<option value="">Carga un XML primero...</option>';
 }
 
 let tempXmlFile = null;
@@ -124,19 +127,43 @@ async function iniciarModoA() {
     document.getElementById('gifWorkspace').style.display = 'flex';
     let selector = document.getElementById('xmlAnimSelector');
     if(selector) selector.style.display = 'none';
+    let cropCont = document.getElementById('gifCropContainer');
+    if (cropCont) cropCont.style.display = 'none';
+    let bpmCont = document.getElementById('bpmContainerGif');
+    if (bpmCont) bpmCont.style.display = 'flex';
+    let prevBox = document.getElementById('previewBoxGif');
+    if (prevBox) prevBox.style.display = 'flex';
     
     window.framesPreRenderizados = [];
     
     // Sort files by name so they are in sequence
     archivosSueltos.sort((a,b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
     
+    let loadedImages = [];
+    let maxWidth = 0;
+    let maxHeight = 0;
+    
     for(let i=0; i<archivosSueltos.length; i++) {
         let img = await fileToImage(archivosSueltos[i]);
+        loadedImages.push(img);
+        if(img.width > maxWidth) maxWidth = img.width;
+        if(img.height > maxHeight) maxHeight = img.height;
+    }
+    
+    for(let i=0; i<loadedImages.length; i++) {
+        let img = loadedImages[i];
         let c = document.createElement('canvas');
-        c.width = img.width;
-        c.height = img.height;
+        c.width = maxWidth;
+        c.height = maxHeight;
         let ctx = c.getContext('2d');
-        ctx.drawImage(img, 0, 0);
+        
+        ctx.fillStyle = '#1a1a2e'; // Evitar frames fantasmas de gifshot
+        ctx.fillRect(0, 0, maxWidth, maxHeight);
+        
+        let dx = (maxWidth - img.width) / 2;
+        let dy = (maxHeight - img.height) / 2;
+        
+        ctx.drawImage(img, dx, dy);
         window.framesPreRenderizados.push(c.toDataURL('image/png'));
     }
     
@@ -154,157 +181,608 @@ async function iniciarModoA() {
 }
 
 let gifCajas = [];
-let isGifDrawing = false;
-let gifStartX = 0;
-let gifStartY = 0;
+let cropMode = 'VIEW'; // VIEW, EDIT
+let cropTool = 'SELECT'; // SELECT, DRAW, DELETE
+let cropZoom = 1;
+let cropPanX = 0;
+let cropPanY = 0;
+let selectedBoxIndex = -1;
+let cropActivePointers = {};
+let cropIsDragging = false;
+let cropDragAction = null;
+
+function changeScannerBgGif(bgClass) {
+    let wrapper = document.getElementById('cropCanvasWrapper');
+    if (wrapper) wrapper.className = 'canvas-wrapper ' + bgClass;
+}
+
+function setGlobalModeGif(mode) {
+    cropMode = mode;
+    let btnN = document.getElementById('btnNavegarGif');
+    let btnE = document.getElementById('btnEditarGif');
+    let toolDiv = document.getElementById('manualToolsDivGif');
+    let wrapper = document.getElementById('cropCanvasWrapper');
+    
+    if (btnN) btnN.classList.remove('active');
+    if (btnE) btnE.classList.remove('active-edit');
+    
+    if (mode === 'VIEW') {
+        if (btnN) btnN.classList.add('active');
+        if (toolDiv) { toolDiv.style.opacity = '0.3'; toolDiv.style.pointerEvents = 'none'; }
+        if (wrapper) wrapper.style.cursor = 'grab';
+    } else {
+        if (btnE) btnE.classList.add('active-edit');
+        if (toolDiv) { toolDiv.style.opacity = '1'; toolDiv.style.pointerEvents = 'auto'; }
+        setScanToolGif(cropTool || 'SELECT');
+    }
+    dibujarGifCrop();
+}
+
+function setScanToolGif(tool) {
+    cropTool = tool;
+    let btnSel = document.getElementById('btnToolSelectGif');
+    let btnDrw = document.getElementById('btnToolDrawGif');
+    let btnDel = document.getElementById('btnToolDeleteGif');
+    let wrapper = document.getElementById('cropCanvasWrapper');
+    
+    if (btnSel) btnSel.classList.remove('active');
+    if (btnDrw) btnDrw.classList.remove('active');
+    if (btnDel) btnDel.classList.remove('active');
+    
+    if (tool === 'SELECT') {
+        if (btnSel) btnSel.classList.add('active');
+        if (wrapper) wrapper.style.cursor = 'default';
+    } else if (tool === 'DRAW') {
+        if (btnDrw) btnDrw.classList.add('active');
+        if (wrapper) wrapper.style.cursor = 'crosshair';
+    } else if (tool === 'DELETE') {
+        if (btnDel) btnDel.classList.add('active');
+        if (wrapper) wrapper.style.cursor = 'not-allowed';
+    }
+    dibujarGifCrop();
+}
+
+function actualizarCSSCrop() {
+    let canvas = document.getElementById('gifCropCanvas');
+    if (!canvas) return;
+    canvas.style.transform = `translate(${cropPanX}px, ${cropPanY}px) scale(${cropZoom})`;
+    let txt = document.getElementById('txtZoomGif');
+    if (txt) txt.textContent = `${Math.round(cropZoom * 100)}%`;
+    dibujarGifCrop();
+}
+
+document.getElementById('btnZoomInGif')?.addEventListener('click', () => {
+    let oldZoom = cropZoom; 
+    cropZoom = Math.round((cropZoom + 0.1) * 10) / 10; 
+    if (cropZoom > 4.0) cropZoom = 4.0;
+    let wrapper = document.getElementById('cropCanvasWrapper');
+    if (!wrapper) return;
+    let rect = wrapper.getBoundingClientRect(); 
+    let cx = rect.width / 2; let cy = rect.height / 2;
+    cropPanX = cx - (cx - cropPanX) * (cropZoom / oldZoom); 
+    cropPanY = cy - (cy - cropPanY) * (cropZoom / oldZoom); 
+    actualizarCSSCrop();
+});
+
+document.getElementById('btnZoomOutGif')?.addEventListener('click', () => {
+    let oldZoom = cropZoom; 
+    cropZoom = Math.round((cropZoom - 0.1) * 10) / 10; 
+    if (cropZoom < 0.1) cropZoom = 0.1;
+    let wrapper = document.getElementById('cropCanvasWrapper');
+    if (!wrapper) return;
+    let rect = wrapper.getBoundingClientRect(); 
+    let cx = rect.width / 2; let cy = rect.height / 2;
+    cropPanX = cx - (cx - cropPanX) * (cropZoom / oldZoom); 
+    cropPanY = cy - (cy - cropPanY) * (cropZoom / oldZoom); 
+    actualizarCSSCrop();
+});
 
 async function iniciarModoB() {
     document.getElementById('gifWorkspace').style.display = 'flex';
     let selector = document.getElementById('xmlAnimSelector');
-    if(selector) selector.style.display = 'none';
+    if (selector) selector.style.display = 'none';
     
-    // Hide preview stuff until extracted
-    document.querySelector('.preview-box').style.display = 'none';
+    let prevBox = document.getElementById('previewBoxGif');
+    if (prevBox) prevBox.style.display = 'none';
     document.getElementById('btnGenerarGif').style.display = 'none';
-    let seq = document.getElementById('gifSequencer');
-    if(seq) seq.style.display = 'none';
+    document.getElementById('btnDescargarGif').style.display = 'none';
     
-    // Show crop container
+    let bpmCont = document.getElementById('bpmContainerGif');
+    if (bpmCont) bpmCont.style.display = 'none';
+    
+    let seq = document.getElementById('gifSequencer');
+    if (seq) seq.style.display = 'none';
+    
     let cropCont = document.getElementById('gifCropContainer');
-    if(cropCont) cropCont.style.display = 'block';
+    if (cropCont) cropCont.style.display = 'block';
+    
+    let btnVolver = document.getElementById('btnVolverACortador');
+    if (btnVolver) btnVolver.style.display = 'none';
+    
+    let txtCargar = document.getElementById('txtCargarPngGif');
+    if (txtCargar) txtCargar.textContent = `CAMBIAR HOJA DE SPRITES (${imgSpritesheet.width}x${imgSpritesheet.height}px)`;
     
     let canvas = document.getElementById('gifCropCanvas');
-    if(!canvas) return;
+    if (!canvas) return;
     
     canvas.width = imgSpritesheet.width;
     canvas.height = imgSpritesheet.height;
     
+    let wrapper = document.getElementById('cropCanvasWrapper');
+    let wrapperRect = wrapper.getBoundingClientRect();
+    let scaleX = wrapperRect.width / imgSpritesheet.width;
+    let scaleY = wrapperRect.height / imgSpritesheet.height;
+    cropZoom = Math.min(scaleX, scaleY) * 0.95;
+    if (cropZoom > 1) cropZoom = 1;
+    if (cropZoom < 0.1) cropZoom = 0.1;
+    
+    cropPanX = (wrapperRect.width - (imgSpritesheet.width * cropZoom)) / 2;
+    cropPanY = (wrapperRect.height - (imgSpritesheet.height * cropZoom)) / 2;
+    
     gifCajas = [];
-    dibujarGifCrop();
+    selectedBoxIndex = -1;
+    actualizarContadorFramesGif();
+    setGlobalModeGif('VIEW');
+    actualizarCSSCrop();
+}
+
+function getRealCropPos(e) {
+    let wrapper = document.getElementById('cropCanvasWrapper');
+    let rect = wrapper.getBoundingClientRect(); 
+    let xWrapper = e.clientX - rect.left; 
+    let yWrapper = e.clientY - rect.top;
+    return { x: (xWrapper - cropPanX) / cropZoom, y: (yWrapper - cropPanY) / cropZoom };
+}
+
+function getHandleAtGif(p, box) {
+    if (!box) return null; 
+    let hs = 30 / cropZoom; // Touch area 30px
+    let h_half = hs / 2;
+    let handles = [
+        { n: 'tl', x: box.x, y: box.y }, 
+        { n: 'tr', x: box.x + box.w, y: box.y }, 
+        { n: 'bl', x: box.x, y: box.y + box.h }, 
+        { n: 'br', x: box.x + box.w, y: box.y + box.h }, 
+        { n: 't', x: box.x + box.w / 2, y: box.y }, 
+        { n: 'b', x: box.x + box.w / 2, y: box.y + box.h }, 
+        { n: 'l', x: box.x, y: box.y + box.h / 2 }, 
+        { n: 'r', x: box.x + box.w, y: box.y + box.h / 2 }
+    ];
+    for (let h of handles) { 
+        if (p.x >= h.x - h_half && p.x <= h.x + h_half && p.y >= h.y - h_half && p.y <= h.y + h_half) return h.n; 
+    } 
+    return null;
 }
 
 function dibujarGifCrop() {
     let canvas = document.getElementById('gifCropCanvas');
-    if(!canvas) return;
+    if (!canvas || !imgSpritesheet) return;
     let ctx = canvas.getContext('2d');
     
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(imgSpritesheet, 0, 0);
     
+    const isEdit = (cropMode === 'EDIT');
+    const isDelete = (cropTool === 'DELETE');
+    
     gifCajas.forEach((caja, index) => {
-        ctx.strokeStyle = '#31b0d1';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4, 2]);
+        let isSelected = (index === selectedBoxIndex && isEdit);
+        
+        // Bordes
+        if (isSelected) {
+            ctx.strokeStyle = '#00e5ff';
+            ctx.lineWidth = Math.max(1.5, 2.5 / cropZoom);
+            ctx.setLineDash([4 / cropZoom, 2 / cropZoom]);
+        } else if (isEdit && isDelete) {
+            ctx.strokeStyle = '#ff4d88';
+            ctx.lineWidth = Math.max(1, 2 / cropZoom);
+            ctx.setLineDash([]);
+        } else {
+            ctx.strokeStyle = 'rgba(0, 229, 255, 0.65)';
+            ctx.lineWidth = Math.max(1, 2 / cropZoom);
+            ctx.setLineDash([]);
+        }
+        
         ctx.strokeRect(caja.x, caja.y, caja.w, caja.h);
         
-        ctx.fillStyle = '#31b0d1';
-        ctx.font = 'bold 16px sans-serif';
+        // Relleno suave translúcido
+        if (isSelected) {
+            ctx.fillStyle = 'rgba(0, 229, 255, 0.18)';
+            ctx.fillRect(caja.x, caja.y, caja.w, caja.h);
+        } else if (isEdit && isDelete) {
+            ctx.fillStyle = 'rgba(255, 77, 136, 0.12)';
+            ctx.fillRect(caja.x, caja.y, caja.w, caja.h);
+        }
+        
+        // 8 Manijas de control si está seleccionada
+        if (isSelected && cropTool === 'SELECT') {
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = Math.max(1, 1.5 / cropZoom);
+            ctx.setLineDash([]);
+            let hs = 14 / cropZoom;
+            let hh = hs / 2;
+            
+            let handlePoints = [
+                [caja.x, caja.y],
+                [caja.x + caja.w, caja.y],
+                [caja.x, caja.y + caja.h],
+                [caja.x + caja.w, caja.y + caja.h],
+                [caja.x + caja.w / 2, caja.y],
+                [caja.x + caja.w / 2, caja.y + caja.h],
+                [caja.x, caja.y + caja.h / 2],
+                [caja.x + caja.w, caja.y + caja.h / 2]
+            ];
+            
+            for (let [hx, hy] of handlePoints) {
+                ctx.fillRect(hx - hh, hy - hh, hs, hs);
+                ctx.strokeRect(hx - hh, hy - hh, hs, hs);
+            }
+        }
+        
+        // Etiqueta numerada con fondo de píldora
         ctx.setLineDash([]);
-        ctx.fillText(index + 1, caja.x + 4, caja.y + 18);
+        let fontSize = Math.max(11, 14 / cropZoom);
+        ctx.font = `bold ${fontSize}px sans-serif`;
+        let labelText = `F${index + 1}`;
+        let textW = ctx.measureText(labelText).width;
+        let pad = 4 / cropZoom;
+        let badgeW = textW + pad * 2;
+        let badgeH = fontSize + pad * 2;
+        let badgeY = (caja.y - badgeH < 0) ? caja.y : caja.y - badgeH;
+        
+        ctx.fillStyle = isSelected ? '#00e5ff' : (isEdit && isDelete ? '#ff4d88' : 'rgba(15, 15, 25, 0.85)');
+        ctx.fillRect(caja.x, badgeY, badgeW, badgeH);
+        
+        ctx.fillStyle = isSelected ? '#000000' : '#ffffff';
+        ctx.fillText(labelText, caja.x + pad, badgeY + fontSize);
     });
+    
+    ctx.setLineDash([]);
+}
+
+function autoFitSelectedGif() {
+    if (selectedBoxIndex === -1 || !imgSpritesheet || !gifCajas[selectedBoxIndex]) {
+        alert("❌ Primero usa el botón Seleccionar y toca una caja.");
+        return;
+    }
+    let b = gifCajas[selectedBoxIndex];
+    let tempC = document.createElement('canvas');
+    tempC.width = imgSpritesheet.width;
+    tempC.height = imgSpritesheet.height;
+    let tCtx = tempC.getContext('2d');
+    tCtx.drawImage(imgSpritesheet, 0, 0);
+    const w = tempC.width; 
+    const h = tempC.height;
+    const imgData = tCtx.getImageData(0, 0, w, h).data;
+    
+    let minX = b.x + b.w, maxX = b.x, minY = b.y + b.h, maxY = b.y; 
+    let found = false;
+    let startX = Math.max(0, Math.floor(b.x)); 
+    let endX = Math.min(w, Math.ceil(b.x + b.w)); 
+    let startY = Math.max(0, Math.floor(b.y)); 
+    let endY = Math.min(h, Math.ceil(b.y + b.h));
+    
+    for (let y = startY; y < endY; y++) {
+        for (let x = startX; x < endX; x++) { 
+            let alpha = imgData[(y * w + x) * 4 + 3]; 
+            if (alpha >= 15) { 
+                if (x < minX) minX = x; 
+                if (x > maxX) maxX = x; 
+                if (y < minY) minY = y; 
+                if (y > maxY) maxY = y; 
+                found = true; 
+            } 
+        }
+    }
+    if (found) { 
+        b.x = minX; 
+        b.y = minY; 
+        b.w = maxX - minX + 1; 
+        b.h = maxY - minY + 1; 
+        actualizarContadorFramesGif();
+        dibujarGifCrop(); 
+    } else { 
+        alert("❌ No se encontró ningún dibujo dentro de esta caja."); 
+        dibujarGifCrop(); 
+    }
 }
 
 function limpiarCajasGif() {
-    gifCajas = [];
-    dibujarGifCrop();
+    if (gifCajas.length === 0) return;
+    if (confirm("¿Estás seguro de que deseas borrar todas las cajas marcadas?")) {
+        gifCajas = [];
+        selectedBoxIndex = -1;
+        actualizarContadorFramesGif();
+        dibujarGifCrop();
+    }
+}
+
+function actualizarContadorFramesGif() {
+    let txt = document.getElementById('txtContadorFramesGif');
+    if (!txt) return;
+    let count = gifCajas.length;
+    if (count === 0) {
+        txt.textContent = "0 Frames";
+    } else if (count === 1) {
+        txt.textContent = selectedBoxIndex === 0 ? "1 Frame (Sel)" : "1 Frame";
+    } else {
+        if (selectedBoxIndex >= 0) {
+            txt.textContent = `${count} Frames (#${selectedBoxIndex + 1} Sel)`;
+        } else {
+            txt.textContent = `${count} Frames`;
+        }
+    }
+}
+
+function volverACortadorGif() {
+    document.getElementById('gifCropContainer').style.display = 'block';
+    let bpmCont = document.getElementById('bpmContainerGif');
+    if (bpmCont) bpmCont.style.display = 'none';
+    let prevBox = document.getElementById('previewBoxGif');
+    if (prevBox) prevBox.style.display = 'none';
+    document.getElementById('btnGenerarGif').style.display = 'none';
+    document.getElementById('btnDescargarGif').style.display = 'none';
+    document.getElementById('gifSequencer').style.display = 'none';
+    actualizarCSSCrop();
 }
 
 function extraerFramesGif() {
-    if(gifCajas.length === 0) {
-        alert("¡No has dibujado ningún recuadro! Dibuja sobre los frames que quieres animar.");
+    if (gifCajas.length === 0) {
+        alert("¡No has marcado ningún frame! Usa el Modo Edición y la herramienta Dibujar Caja para marcar tus frames.");
         return;
     }
     
-    window.framesPreRenderizados = [];
-    
-    gifCajas.forEach(caja => {
-        let c = document.createElement('canvas');
-        c.width = caja.w;
-        c.height = caja.h;
-        let ctx = c.getContext('2d');
-        ctx.drawImage(imgSpritesheet, caja.x, caja.y, caja.w, caja.h, 0, 0, caja.w, caja.h);
-        window.framesPreRenderizados.push(c.toDataURL('image/png'));
-    });
-    
-    document.getElementById('gifCropContainer').style.display = 'none';
-    document.querySelector('.preview-box').style.display = 'block';
-    document.getElementById('txtFrameCount').textContent = `${window.framesPreRenderizados.length} Frames`;
-    document.getElementById('previewPlaceholder').style.display = 'none';
-    document.getElementById('previewGifImg').style.display = 'block';
-    document.getElementById('btnGenerarGif').style.display = 'block';
-    
-    let seq = document.getElementById('gifSequencer');
-    if(seq) seq.style.display = 'block';
-    
-    renderizarSecuenciadorGif();
-    actualizarBPM();
+    mostrarCargaGlobal("Extrayendo frames...");
+    setTimeout(() => {
+        window.framesPreRenderizados = [];
+        
+        let maxWidth = 0;
+        let maxHeight = 0;
+        gifCajas.forEach(caja => {
+            if (caja.w > maxWidth) maxWidth = caja.w;
+            if (caja.h > maxHeight) maxHeight = caja.h;
+        });
+        
+        gifCajas.forEach(caja => {
+            let c = document.createElement('canvas');
+            c.width = maxWidth;
+            c.height = maxHeight;
+            let ctx = c.getContext('2d');
+            
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, maxWidth, maxHeight);
+            
+            let dx = (maxWidth - caja.w) / 2;
+            let dy = (maxHeight - caja.h) / 2;
+            
+            ctx.drawImage(imgSpritesheet, caja.x, caja.y, caja.w, caja.h, dx, dy, caja.w, caja.h);
+            window.framesPreRenderizados.push(c.toDataURL('image/png'));
+        });
+        
+        document.getElementById('gifCropContainer').style.display = 'none';
+        let bpmCont = document.getElementById('bpmContainerGif');
+        if (bpmCont) bpmCont.style.display = 'flex';
+        let prevBox = document.getElementById('previewBoxGif');
+        if (prevBox) prevBox.style.display = 'flex';
+        document.getElementById('txtFrameCount').textContent = `${window.framesPreRenderizados.length} Frames`;
+        document.getElementById('previewPlaceholder').style.display = 'none';
+        document.getElementById('previewGifImg').style.display = 'block';
+        document.getElementById('btnGenerarGif').style.display = 'block';
+        
+        let seq = document.getElementById('gifSequencer');
+        if (seq) seq.style.display = 'block';
+        
+        let btnVolver = document.getElementById('btnVolverACortador');
+        if (btnVolver) btnVolver.style.display = 'block';
+        
+        renderizarSecuenciadorGif();
+        actualizarBPM();
+        ocultarCargaGlobal();
+    }, 100);
 }
 
-// Eventos del canvas
+window.addEventListener('keydown', (e) => {
+    if (modoActual !== 'B' || cropMode !== 'EDIT' || selectedBoxIndex === -1) return;
+    let b = gifCajas[selectedBoxIndex];
+    if (!b) return;
+    let step = e.shiftKey ? 10 : 1;
+    let handled = true;
+    
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+        gifCajas.splice(selectedBoxIndex, 1);
+        selectedBoxIndex = -1;
+        actualizarContadorFramesGif();
+        dibujarGifCrop();
+        e.preventDefault();
+        return;
+    }
+    
+    if (e.ctrlKey) {
+        if (e.key === 'ArrowUp') b.h = Math.max(5, b.h - step);
+        else if (e.key === 'ArrowDown') b.h += step;
+        else if (e.key === 'ArrowLeft') b.w = Math.max(5, b.w - step);
+        else if (e.key === 'ArrowRight') b.w += step;
+        else handled = false;
+    } else {
+        if (e.key === 'ArrowUp') b.y -= step;
+        else if (e.key === 'ArrowDown') b.y += step;
+        else if (e.key === 'ArrowLeft') b.x -= step;
+        else if (e.key === 'ArrowRight') b.x += step;
+        else handled = false;
+    }
+    
+    if (handled) {
+        e.preventDefault();
+        dibujarGifCrop();
+    }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
-    let canvas = document.getElementById('gifCropCanvas');
-    if(canvas) {
-        let getPos = (e) => {
-            let rect = canvas.getBoundingClientRect();
-            // Handle touch or mouse
-            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            let clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            let scaleX = canvas.width / rect.width;
-            let scaleY = canvas.height / rect.height;
-            return {
-                x: (clientX - rect.left) * scaleX,
-                y: (clientY - rect.top) * scaleY
-            };
-        };
+    let wrapper = document.getElementById('cropCanvasWrapper');
+    if (!wrapper) return;
+    
+    wrapper.addEventListener('pointerdown', (e) => {
+        if (!imgSpritesheet) return;
+        wrapper.setPointerCapture(e.pointerId);
+        cropActivePointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+        
+        if (cropMode === 'EDIT') {
+            let p = getRealCropPos(e);
+            if (cropTool === 'DELETE') {
+                for (let i = gifCajas.length - 1; i >= 0; i--) {
+                    let b = gifCajas[i];
+                    if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) {
+                        gifCajas.splice(i, 1);
+                        selectedBoxIndex = -1;
+                        actualizarContadorFramesGif();
+                        dibujarGifCrop();
+                        return;
+                    }
+                }
+            } else if (cropTool === 'DRAW') {
+                cropIsDragging = true;
+                gifCajas.push({ x: Math.round(p.x), y: Math.round(p.y), w: 10, h: 10 });
+                selectedBoxIndex = gifCajas.length - 1;
+                cropDragAction = { type: 'DRAW', startX: p.x, startY: p.y };
+                actualizarContadorFramesGif();
+                dibujarGifCrop();
+            } else if (cropTool === 'SELECT') {
+                if (selectedBoxIndex !== -1) {
+                    let h = getHandleAtGif(p, gifCajas[selectedBoxIndex]);
+                    if (h) {
+                        cropIsDragging = true;
+                        let b = gifCajas[selectedBoxIndex];
+                        cropDragAction = { type: 'RESIZE', handle: h, startX: p.x, startY: p.y, origX: b.x, origY: b.y, origW: b.w, origH: b.h };
+                        return;
+                    }
+                }
+                let found = -1;
+                for (let i = gifCajas.length - 1; i >= 0; i--) {
+                    let b = gifCajas[i];
+                    if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) {
+                        found = i;
+                        break;
+                    }
+                }
+                selectedBoxIndex = found;
+                if (found !== -1) {
+                    cropIsDragging = true;
+                    let b = gifCajas[selectedBoxIndex];
+                    cropDragAction = { type: 'MOVE', startX: p.x, startY: p.y, origX: b.x, origY: b.y };
+                }
+                actualizarContadorFramesGif();
+                dibujarGifCrop();
+            }
+        }
+    });
 
-        const startDraw = (e) => {
-            if(e.touches && e.touches.length > 1) return; // ignore multi-touch
-            e.preventDefault();
-            let pos = getPos(e);
-            isGifDrawing = true;
-            gifStartX = pos.x;
-            gifStartY = pos.y;
-            gifCajas.push({x: gifStartX, y: gifStartY, w: 0, h: 0});
-        };
-
-        const doDraw = (e) => {
-            if(!isGifDrawing) return;
-            e.preventDefault();
-            let pos = getPos(e);
-            let currentBox = gifCajas[gifCajas.length - 1];
-            currentBox.w = pos.x - gifStartX;
-            currentBox.h = pos.y - gifStartY;
-            
-            // Normalize negatives if drawn backwards
-            if(currentBox.w < 0) { currentBox.x = pos.x; currentBox.w = Math.abs(currentBox.w); } else { currentBox.x = gifStartX; }
-            if(currentBox.h < 0) { currentBox.y = pos.y; currentBox.h = Math.abs(currentBox.h); } else { currentBox.y = gifStartY; }
-            
-            dibujarGifCrop();
-        };
-
-        const endDraw = (e) => {
-            if(!isGifDrawing) return;
-            isGifDrawing = false;
-            let currentBox = gifCajas[gifCajas.length - 1];
-            if(currentBox.w < 10 || currentBox.h < 10) {
-                gifCajas.pop(); // Too small, ignore
+    wrapper.addEventListener('pointermove', (e) => {
+        if (!cropActivePointers[e.pointerId]) return;
+        if (cropMode === 'VIEW') {
+            let keys = Object.keys(cropActivePointers);
+            if (keys.length === 1) {
+                let dx = e.clientX - cropActivePointers[e.pointerId].x;
+                let dy = e.clientY - cropActivePointers[e.pointerId].y;
+                cropPanX += dx;
+                cropPanY += dy;
+                cropActivePointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+                actualizarCSSCrop();
+            } else if (keys.length === 2) {
+                let id1 = keys[0], id2 = keys[1];
+                let p1 = cropActivePointers[id1], p2 = cropActivePointers[id2];
+                let movingId = e.pointerId;
+                let otherId = (movingId == id1) ? id2 : id1;
+                let pOther = cropActivePointers[otherId];
+                let oldDist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                let cx = (p1.x + p2.x) / 2;
+                let cy = (p1.y + p2.y) / 2;
+                cropActivePointers[movingId] = { x: e.clientX, y: e.clientY };
+                let newDist = Math.hypot(cropActivePointers[movingId].x - pOther.x, cropActivePointers[movingId].y - pOther.y);
+                let oldZoom = cropZoom;
+                let delta = (newDist - oldDist) * 0.005;
+                cropZoom += delta;
+                if (cropZoom < 0.1) cropZoom = 0.1;
+                if (cropZoom > 4.0) cropZoom = 4.0;
+                let rect = wrapper.getBoundingClientRect();
+                let pinchX = cx - rect.left;
+                let pinchY = cy - rect.top;
+                cropPanX = pinchX - (pinchX - cropPanX) * (cropZoom / oldZoom);
+                cropPanY = pinchY - (pinchY - cropPanY) * (cropZoom / oldZoom);
+                actualizarCSSCrop();
+            }
+        } else if (cropMode === 'EDIT' && cropIsDragging && cropDragAction) {
+            let p = getRealCropPos(e);
+            let b = gifCajas[selectedBoxIndex];
+            if (!b) return;
+            if (cropDragAction.type === 'DRAW') {
+                let curW = Math.round(p.x - cropDragAction.startX);
+                let curH = Math.round(p.y - cropDragAction.startY);
+                if (curW >= 0) { b.x = Math.round(cropDragAction.startX); b.w = curW; }
+                else { b.x = Math.round(p.x); b.w = Math.abs(curW); }
+                if (curH >= 0) { b.y = Math.round(cropDragAction.startY); b.h = curH; }
+                else { b.y = Math.round(p.y); b.h = Math.abs(curH); }
+            } else if (cropDragAction.type === 'MOVE') {
+                b.x = Math.round(cropDragAction.origX + (p.x - cropDragAction.startX));
+                b.y = Math.round(cropDragAction.origY + (p.y - cropDragAction.startY));
+            } else if (cropDragAction.type === 'RESIZE') {
+                let dx = p.x - cropDragAction.startX;
+                let dy = p.y - cropDragAction.startY;
+                if (cropDragAction.handle.includes('r')) { b.w = Math.max(5, Math.round(cropDragAction.origW + dx)); }
+                if (cropDragAction.handle.includes('b')) { b.h = Math.max(5, Math.round(cropDragAction.origH + dy)); }
+                if (cropDragAction.handle.includes('l')) { b.x = Math.round(cropDragAction.origX + dx); b.w = Math.max(5, Math.round(cropDragAction.origW - dx)); }
+                if (cropDragAction.handle.includes('t')) { b.y = Math.round(cropDragAction.origY + dy); b.h = Math.max(5, Math.round(cropDragAction.origH - dy)); }
             }
             dibujarGifCrop();
-        };
+        }
+    });
 
-        canvas.addEventListener('mousedown', startDraw);
-        canvas.addEventListener('mousemove', doDraw);
-        window.addEventListener('mouseup', endDraw); // attach to window to catch releases outside
-        
-        canvas.addEventListener('touchstart', startDraw, {passive: false});
-        canvas.addEventListener('touchmove', doDraw, {passive: false});
-        window.addEventListener('touchend', endDraw);
+    function removeCropPointer(e) {
+        delete cropActivePointers[e.pointerId];
+        if (cropIsDragging) {
+            if (cropDragAction && cropDragAction.type === 'DRAW') {
+                let b = gifCajas[selectedBoxIndex];
+                if (b && (b.w < 10 || b.h < 10)) {
+                    gifCajas.pop();
+                    selectedBoxIndex = -1;
+                }
+            }
+            cropIsDragging = false;
+            cropDragAction = null;
+            actualizarContadorFramesGif();
+            dibujarGifCrop();
+        }
     }
+    
+    wrapper.addEventListener('pointerup', removeCropPointer);
+    wrapper.addEventListener('pointercancel', removeCropPointer);
+
+    wrapper.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        let oldZoom = cropZoom;
+        if (e.deltaY < 0) cropZoom *= 1.1;
+        else cropZoom /= 1.1;
+        if (cropZoom < 0.1) cropZoom = 0.1;
+        if (cropZoom > 4.0) cropZoom = 4.0;
+        
+        let rect = wrapper.getBoundingClientRect();
+        let cx = e.clientX - rect.left;
+        let cy = e.clientY - rect.top;
+        cropPanX = cx - (cx - cropPanX) * (cropZoom / oldZoom);
+        cropPanY = cy - (cy - cropPanY) * (cropZoom / oldZoom);
+        actualizarCSSCrop();
+    }, { passive: false });
 });
 
 function iniciarModoC() {
     document.getElementById('gifWorkspace').style.display = 'flex';
     document.getElementById('xmlAnimSelector').style.display = 'block';
+    let cropCont = document.getElementById('gifCropContainer');
+    if (cropCont) cropCont.style.display = 'none';
+    let bpmCont = document.getElementById('bpmContainerGif');
+    if (bpmCont) bpmCont.style.display = 'flex';
+    let prevBox = document.getElementById('previewBoxGif');
+    if (prevBox) prevBox.style.display = 'flex';
     
     // Parsear XML
     spritesXML = [];
@@ -352,19 +830,172 @@ function iniciarModoC() {
 }
 
 let animTimer = null;
+let animRafId = null;
+let animStartTime = null;
 window.framesPreRenderizados = [];
+window.beatsPorCiclo = 1; // 1, 2, 4, 0.5, o 'step'
+let audioCtxMetronomo = null;
+let metronomoAudioActivo = false;
+let ultimoBeatPulse = -1;
+
+function obtenerBpmActual() {
+    let inputNum = document.getElementById('inputBpmNum');
+    let slider = document.getElementById('sliderBpm');
+    let bpm = 100;
+    if (inputNum && inputNum.value) {
+        bpm = parseFloat(inputNum.value);
+    } else if (slider && slider.value) {
+        bpm = parseFloat(slider.value);
+    }
+    if (isNaN(bpm) || bpm < 30) bpm = 30;
+    if (bpm > 400) bpm = 400;
+    return bpm;
+}
+
+function calcularDuracionCicloMs() {
+    let bpm = obtenerBpmActual();
+    let numFrames = (window.framesPreRenderizados && window.framesPreRenderizados.length) || 1;
+    let beatMs = 60000 / bpm;
+    
+    if (window.beatsPorCiclo === 'step') {
+        // En FNF: 1 Beat = 4 Steps (semicorcheas) -> 1 Step = (60000 / bpm) / 4 ms
+        let stepMs = beatMs / 4;
+        return numFrames * stepMs;
+    }
+    
+    let beats = typeof window.beatsPorCiclo === 'number' ? window.beatsPorCiclo : 1;
+    return beatMs * beats;
+}
+
+function cambiarModoRitmo(beats, btnEl) {
+    window.beatsPorCiclo = beats;
+    document.querySelectorAll('.btn-rhythm').forEach(b => b.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+    actualizarBPM();
+}
+
+function ajustarBpmRelativo(delta) {
+    let bpm = Math.round(obtenerBpmActual() + delta);
+    if (bpm < 40) bpm = 40;
+    if (bpm > 300) bpm = 300;
+    let slider = document.getElementById('sliderBpm');
+    let inputNum = document.getElementById('inputBpmNum');
+    if (slider) slider.value = bpm;
+    if (inputNum) inputNum.value = bpm;
+    actualizarBPM();
+}
+
+function onInputSliderBpm(val) {
+    let inputNum = document.getElementById('inputBpmNum');
+    if (inputNum) inputNum.value = val;
+    actualizarBPM();
+}
+
+function onInputChangeBpmNum(val) {
+    let slider = document.getElementById('sliderBpm');
+    let num = parseFloat(val);
+    if (!isNaN(num) && slider) {
+        slider.value = Math.min(300, Math.max(40, num));
+    }
+    actualizarBPM();
+}
+
+function toggleMetronomoAudio() {
+    metronomoAudioActivo = !metronomoAudioActivo;
+    let btn = document.getElementById('btnMetronomoAudio');
+    if (btn) {
+        if (metronomoAudioActivo) {
+            btn.classList.remove('btn-secundario');
+            btn.classList.add('btn-primario');
+            btn.innerHTML = '🔊 Beat Sonando';
+        } else {
+            btn.classList.remove('btn-primario');
+            btn.classList.add('btn-secundario');
+            btn.innerHTML = '🔈 Escuchar Beat';
+        }
+    }
+    if (metronomoAudioActivo && !audioCtxMetronomo) {
+        try {
+            audioCtxMetronomo = new (window.AudioContext || window.webkitAudioContext)();
+        } catch(e) {
+            console.error("AudioContext no soportado", e);
+        }
+    }
+}
+
+function reproducirTickMetronomo() {
+    if (!metronomoAudioActivo) return;
+    try {
+        if (!audioCtxMetronomo) {
+            audioCtxMetronomo = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtxMetronomo.state === 'suspended') {
+            audioCtxMetronomo.resume();
+        }
+        let now = audioCtxMetronomo.currentTime;
+        let osc = audioCtxMetronomo.createOscillator();
+        let gain = audioCtxMetronomo.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1000, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+        osc.connect(gain);
+        gain.connect(audioCtxMetronomo.destination);
+        osc.start(now);
+        osc.stop(now + 0.04);
+    } catch(e) {
+        console.error(e);
+    }
+}
 
 function actualizarBPM() {
-    let bpm = document.getElementById('sliderBpm').value;
-    document.getElementById('lblBpm').textContent = bpm;
+    let bpm = obtenerBpmActual();
+    let slider = document.getElementById('sliderBpm');
+    let inputNum = document.getElementById('inputBpmNum');
+    let lblBpm = document.getElementById('lblBpm');
     
-    let fps = Math.round((bpm / 100) * 24);
-    if(fps < 5) fps = 5;
-    if(fps > 60) fps = 60;
-    document.getElementById('lblFps').textContent = `(= ${fps} FPS)`;
+    if (slider && slider.value != bpm) slider.value = bpm;
+    if (inputNum && inputNum.value != bpm) inputNum.value = bpm;
+    if (lblBpm) lblBpm.textContent = bpm;
+    
+    let numFrames = (window.framesPreRenderizados && window.framesPreRenderizados.length) || 1;
+    let beatMs = 60000 / bpm;
+    let duracionCicloMs = calcularDuracionCicloMs();
+    let msPerFrame = duracionCicloMs / numFrames;
+    let fpsEquiv = 1000 / msPerFrame;
+    
+    let lblDur = document.getElementById('lblDuracionDetalle');
+    if (lblDur) {
+        if (window.beatsPorCiclo === 'step') {
+            lblDur.textContent = `1 Step = ${(beatMs/4).toFixed(1)} ms | 1 Beat = ${beatMs.toFixed(1)} ms`;
+        } else {
+            lblDur.textContent = `${window.beatsPorCiclo} Beat(s) = ${(beatMs * window.beatsPorCiclo).toFixed(1)} ms`;
+        }
+    }
+    
+    let lblCiclo = document.getElementById('lblCicloTotalMs');
+    if (lblCiclo) lblCiclo.textContent = `${duracionCicloMs.toFixed(1)} ms`;
+    
+    let lblMs = document.getElementById('lblMsPerFrame');
+    if (lblMs) lblMs.textContent = `${msPerFrame.toFixed(2)} ms/f`;
+    
+    let lblFpsEquiv = document.getElementById('lblFpsEquiv');
+    if (lblFpsEquiv) lblFpsEquiv.textContent = `(= ${fpsEquiv.toFixed(1)} FPS continuo)`;
+    
+    let lblFps = document.getElementById('lblFps');
+    if (lblFps) lblFps.textContent = `(= ${msPerFrame.toFixed(1)} ms/f | ${fpsEquiv.toFixed(1)} FPS)`;
+    
+    // Si ya se había generado un GIF pero cambiaron el tempo, permitir volver a exportar
+    let btnGen = document.getElementById('btnGenerarGif');
+    let btnDown = document.getElementById('btnDescargarGif');
+    if (btnGen && btnDown && btnDown.style.display === 'block') {
+        btnGen.style.display = 'block';
+        btnDown.style.display = 'none';
+    }
     
     if(window.framesPreRenderizados.length > 0) {
-        iniciarAnimacionPreview(fps);
+        iniciarAnimacionPreview();
     }
 }
 
@@ -391,6 +1022,9 @@ async function actualizarVistaPrevia() {
         c.width = maxWidth;
         c.height = maxHeight;
         let ctx = c.getContext('2d');
+        
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, maxWidth, maxHeight);
         
         let dx = Math.abs(f.frameX);
         let dy = Math.abs(f.frameY);
@@ -460,34 +1094,118 @@ function renderizarSecuenciadorGif() {
 }
 
 let currFrameIndex = 0;
-function iniciarAnimacionPreview(fps) {
-    clearInterval(animTimer);
-    let msPerFrame = 1000 / fps;
-    currFrameIndex = 0;
+function iniciarAnimacionPreview() {
+    if (animRafId) cancelAnimationFrame(animRafId);
+    if (animTimer) clearInterval(animTimer);
     
+    if (!window.framesPreRenderizados || window.framesPreRenderizados.length === 0) return;
     let imgEl = document.getElementById('previewGifImg');
-    if(window.framesPreRenderizados.length > 0) {
-        imgEl.src = window.framesPreRenderizados[0];
+    if (!imgEl) return;
+    
+    let totalFrames = window.framesPreRenderizados.length;
+    let duracionCicloMs = calcularDuracionCicloMs();
+    if (duracionCicloMs <= 0) duracionCicloMs = 500;
+    
+    let bpm = obtenerBpmActual();
+    let beatMs = 60000 / bpm;
+    
+    animStartTime = performance.now();
+    let ultimoFrameMostrado = -1;
+    let ledEl = document.getElementById('beatIndicatorLed');
+    
+    function loop(now) {
+        let elapsed = now - animStartTime;
+        let progress = (elapsed % duracionCicloMs) / duracionCicloMs;
+        let frameIdx = Math.floor(progress * totalFrames);
+        if (frameIdx >= totalFrames) frameIdx = totalFrames - 1;
+        
+        if (frameIdx !== ultimoFrameMostrado) {
+            ultimoFrameMostrado = frameIdx;
+            imgEl.src = window.framesPreRenderizados[frameIdx];
+        }
+        
+        // Pulso visual y sonoro sincronizado al Beat musical exacto
+        let curBeatNumber = Math.floor(elapsed / beatMs);
+        if (curBeatNumber !== ultimoBeatPulse) {
+            ultimoBeatPulse = curBeatNumber;
+            reproducirTickMetronomo();
+            if (ledEl) {
+                ledEl.classList.add('beat-pulse-active');
+                setTimeout(() => {
+                    ledEl.classList.remove('beat-pulse-active');
+                }, 90);
+            }
+        }
+        
+        animRafId = requestAnimationFrame(loop);
     }
     
-    animTimer = setInterval(() => {
-        if(window.framesPreRenderizados.length === 0) return;
-        currFrameIndex = (currFrameIndex + 1) % window.framesPreRenderizados.length;
-        imgEl.src = window.framesPreRenderizados[currFrameIndex];
-    }, msPerFrame);
+    animRafId = requestAnimationFrame(loop);
+}
+
+function calcularDelaysPorFrame(duracionTotalSecs, numFrames) {
+    let targetCentisecs = Math.max(numFrames, Math.round(duracionTotalSecs * 100));
+    let base = Math.floor(targetCentisecs / numFrames);
+    let remainder = targetCentisecs % numFrames;
+    let delays = [];
+    
+    let acc = 0;
+    for (let i = 0; i < numFrames; i++) {
+        acc += remainder;
+        let d = base;
+        if (acc >= numFrames) {
+            d += 1;
+            acc -= numFrames;
+        }
+        delays.push(Math.max(1, d)); // Mínimo 1 centisegundo (10ms)
+    }
+    return delays;
+}
+
+function ajustarDelaysEnGifDataUrl(dataUrl, frameDelaysCentisecs) {
+    try {
+        let base64 = dataUrl.split(',')[1];
+        let binary = atob(base64);
+        let bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        
+        let frameIdx = 0;
+        for (let i = 0; i < bytes.length - 8; i++) {
+            // Cabecera de Graphic Control Extension (GCE): 0x21, 0xF9, 0x04 y terminator 0x00
+            if (bytes[i] === 0x21 && bytes[i + 1] === 0xF9 && bytes[i + 2] === 0x04 && bytes[i + 7] === 0x00) {
+                if (frameIdx < frameDelaysCentisecs.length) {
+                    let delay = Math.max(1, Math.round(frameDelaysCentisecs[frameIdx]));
+                    bytes[i + 4] = delay & 0xFF;        // Delay LSB
+                    bytes[i + 5] = (delay >> 8) & 0xFF; // Delay MSB
+                    frameIdx++;
+                }
+            }
+        }
+        
+        let nuevoBinary = '';
+        let chunkSize = 8192;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+            let chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+            nuevoBinary += String.fromCharCode.apply(null, chunk);
+        }
+        return 'data:image/gif;base64,' + btoa(nuevoBinary);
+    } catch(err) {
+        console.warn("No se pudo parchear los delays del GIF, usando salida directa:", err);
+        return dataUrl;
+    }
 }
 
 function generarGif() {
     if(window.framesPreRenderizados.length === 0) return;
     
-    let bpm = document.getElementById('sliderBpm').value;
-    let fps = Math.round((bpm / 100) * 24);
-    if(fps < 5) fps = 5;
-    if(fps > 60) fps = 60;
+    let duracionCicloMs = calcularDuracionCicloMs();
+    let numFrames = window.framesPreRenderizados.length;
+    let duracionTotalSecs = duracionCicloMs / 1000;
+    let intervalSecs = duracionTotalSecs / numFrames;
     
-    let intervalSecs = 1 / fps;
-    
-    mostrarCargaGlobal("Codificando la animación, por favor espera...<br><span style='color:var(--accent-pink); font-size: 0.8rem;'>⚠️ Tu pantalla se congelará un momento, es normal.</span>");
+    mostrarCargaGlobal("Codificando la animación al BPM exacto, por favor espera...<br><span style='color:var(--accent-pink); font-size: 0.8rem;'>⚠️ Tu pantalla se congelará un momento, es normal.</span>");
     
     setTimeout(() => {
         gifshot.createGIF({
@@ -495,21 +1213,25 @@ function generarGif() {
             gifWidth: document.getElementById('previewGifImg').naturalWidth || 300,
             gifHeight: document.getElementById('previewGifImg').naturalHeight || 300,
             interval: intervalSecs,
-            numFrames: window.framesPreRenderizados.length,
-            sampleInterval: 10,
-            progressCallback: function(captureProgress) {
-                // Not possible to show progress nicely because it blocks main thread if no workers
-            }
+            numFrames: numFrames,
+            sampleInterval: 10
         }, function(obj) {
             ocultarCargaGlobal();
             if(!obj.error) {
                 let image = obj.image;
-                document.getElementById('previewGifImg').src = image;
-                clearInterval(animTimer); // Detener el loop manual de canvas
+                
+                // Parchear delays exactos en los metadatos del GIF para que coincida matemáticamente con la música
+                let delaysCentisecs = calcularDelaysPorFrame(duracionTotalSecs, numFrames);
+                let gifFinal = ajustarDelaysEnGifDataUrl(image, delaysCentisecs);
+                
+                document.getElementById('previewGifImg').src = gifFinal;
+                if (animRafId) cancelAnimationFrame(animRafId);
+                if (animTimer) clearInterval(animTimer);
                 
                 let btnDown = document.getElementById('btnDescargarGif');
-                btnDown.href = image;
-                btnDown.download = document.getElementById('selectAnimacionXML').value + ".gif";
+                btnDown.href = gifFinal;
+                let nombreAnim = (document.getElementById('selectAnimacionXML')?.value) || 'animacion_bpm';
+                btnDown.download = nombreAnim + ".gif";
                 
                 document.getElementById('btnGenerarGif').style.display = 'none';
                 btnDown.style.display = 'block';
@@ -517,5 +1239,5 @@ function generarGif() {
                 alert("❌ Hubo un error al generar el GIF.");
             }
         });
-    }, 500);
+    }, 300);
 }

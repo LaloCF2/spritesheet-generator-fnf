@@ -1,11 +1,21 @@
 const CHANGELOG_DATA = [
     {
+        version: "1.5.1",
+        date: "Reciente",
+        changes: [
+            "<b><span style='color: #ddff00ff;'>[Generador GIF Animado]</span> Estas mejoras solo estan para esa funcion.</b>",
+            "<b><span style='color: #ffaa00;'>[MEJORA]</span> Arquitectura:</b> Separación de herramientas en múltiples páginas para una carga drásticamente más rápida en móviles.",
+            "<b><span style='color: #00ff88;'>[MEJORA]</span> Sincronización Musical BPM:</b> Mejora el ajuste de delays por frame en centisegundos para que los GIFs encajen perfectamente con cualquier canción sin repetir frames innecesariamente.",
+            "<b><span style='color: #00ff88;'>[MEJORA]</span> Sistema de recortes:</b> Mejoras al realizar cajas o recortes para mejor facilidad.",
+            "<b><span style='color: #aaa;'>[CORRECCIÓN]</span></b> Corrección de errores y mejoras de vizulización."
+
+        ]
+    },
+    {
         version: "1.5.0",
-        date: "Actual",
         changes: [
             "<b><span style='color: #00e5ff;'>[NUEVO]</span> Generador de GIF Animado:</b> Crea GIFs a partir de archivos sueltos, spritesheets solos, o combinaciones de XML+PNG sincronizados a los BPM de Friday Night Funkin'.",
             "<b><span style='color: #4caf50;'>[MEJORA]</span> Autoguardado:</b> Sistema de guardado automático en caché periódico y al minimizar la aplicación para evitar pérdida de progreso.",
-            "<b><span style='color: #ffaa00;'>[MEJORA]</span> Arquitectura:</b> Separación de herramientas en múltiples páginas para una carga drásticamente más rápida en móviles.",
             "<b><span style='color: #b57cff;'>[NUEVO]</span> Política de Privacidad:</b> Claridad total sobre el procesamiento 100% local sin servidores."
         ]
     },
