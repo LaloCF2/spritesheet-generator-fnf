@@ -1,9 +1,11 @@
 # Spritesheet Generator FNF - Historial de Versiones
 
 ## Versión 1.5.1 (Actual)
-- **[MEJORA] Generador de GIF Animado:** Estas mejoras solo estan para esa funcion.
+- **[MEJORA] Optimizador (Alineación Automática Psych Engine):** Cálculo matemático automático de posición y escala al optimizar la resolución de texturas y XML junto al archivo `.json` del personaje. Se compensa exactamente la contracción del centro de transformación HaxeFlixel (ΔX, ΔY), asegurando que el personaje conserve su posición original en el escenario sin flotar ni desfasarse.
+- **[MEJORA] Proceso con Rueda de Carga:** Animación de carga y fases matemáticas detalladas durante la optimización, con confirmación visual interactiva en el badge del JSON importado.
 - **[MEJORA] Arquitectura:** Separación de herramientas en múltiples archivos HTML para carga más rápida y mejor rendimiento en dispositivos móviles.
 - **[MEJORA] Sincronización Musical BPM:** Mejora el ajuste de delays por frame en centisegundos para que los GIFs encajen perfectamente con cualquier canción sin repetir frames innecesariamente.
+- **[NUEVO] Control de Fondo para GIFs:** Opción para exportar y previsualizar GIFs con fondo transparente o con color sólido, incluyendo paleta de colores rápidos (negro, blanco, croma verde, croma azul, magenta, etc.) y selector de color personalizado.
 - **[MEJORA] Sistema de recortes:** Mejoras al realizar cajas o recortes para mejor facilidad.
 - **[CORRECCION]** Corrección de errores y mejoras generales de rendimiento.
 

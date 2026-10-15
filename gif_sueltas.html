@@ -193,6 +193,44 @@
             box-shadow: 0 0 14px var(--accent), 0 0 25px var(--accent) !important;
             transform: scale(1.35) !important;
         }
+
+        .gif-bg-selector-container {
+            background: rgba(18, 19, 32, 0.85);
+            border: 1px solid rgba(0, 229, 255, 0.25);
+            padding: 16px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-color-swatch {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            outline: none;
+            padding: 0;
+            display: inline-block;
+        }
+
+        .btn-color-swatch:hover {
+            transform: scale(1.2);
+            border-color: #fff;
+            box-shadow: 0 0 10px rgba(255,255,255,0.6);
+        }
+
+        .btn-color-swatch.active {
+            transform: scale(1.25);
+            border: 3px solid #fff !important;
+            box-shadow: 0 0 14px var(--accent), 0 0 20px var(--accent) !important;
+        }
     </style>
 </head>
 
@@ -319,6 +357,49 @@
                             <div>🎞️ Velocidad frame: <span id="lblMsPerFrame" style="color:#fff; font-weight:bold;">42.86 ms/f</span></div>
                             <div id="lblFpsEquiv" style="color:var(--accent-pink); font-size:0.78rem;">Precisión continua musical</div>
                             <span id="lblFps" style="display:none;">(= 24 FPS)</span>
+                        </div>
+                    </div>
+
+                    <!-- Control de Fondo del GIF (Transparente o Paleta de Color) -->
+                    <div class="gif-bg-selector-container" id="gifBgContainer">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; width:100%; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:1.05rem; font-weight:bold; color:var(--accent);">🎨 Fondo del GIF</span>
+                                <span id="badgeFondoActual" style="font-size:0.75rem; background:rgba(0, 229, 255, 0.15); border:1px solid var(--accent); color:var(--accent); padding:2px 8px; border-radius:12px; font-weight:600;">Transparente</span>
+                            </div>
+                            <div style="display:flex; gap:6px;">
+                                <button type="button" class="btn-rhythm active" id="btnBgModoTransparente" onclick="seleccionarModoFondoGif('transparent')" title="Exportar con fondo transparente">
+                                    🏁 Transparente
+                                </button>
+                                <button type="button" class="btn-rhythm" id="btnBgModoColor" onclick="seleccionarModoFondoGif('color')" title="Exportar con color de fondo">
+                                    🎨 Color Sólido
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Panel de Paleta de Colores (se activa con 'color') -->
+                        <div id="panelPaletaColoresGif" style="display:none; flex-direction:column; gap:10px; margin-top:4px; background:rgba(0,0,0,0.25); padding:12px; border-radius:8px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                <span style="font-size:0.85rem; color:#ccc; font-weight:bold;">Paleta de colores sugeridos:</span>
+                                <div style="display:flex; align-items:center; gap:8px; background:rgba(0,0,0,0.4); padding:4px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.15);">
+                                    <span style="font-size:0.8rem; color:#aaa;">Personalizado:</span>
+                                    <input type="color" id="pickerColorFondoGif" value="#1a1a2e" oninput="cambiarColorFondoGif(this.value)" style="cursor:pointer; width:28px; height:28px; border:none; border-radius:4px; background:transparent;">
+                                    <span id="lblColorFondoHex" style="font-size:0.85rem; color:var(--accent); font-weight:bold; font-family:monospace;">#1a1a2e</span>
+                                </div>
+                            </div>
+                            
+                            <div class="color-palette-swatches" id="colorPaletteSwatches" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                                <button type="button" class="btn-color-swatch active" data-color="#1a1a2e" onclick="seleccionarSwatchColor('#1a1a2e', this)" style="background:#1a1a2e;" title="Oscuro FNF (#1a1a2e)"></button>
+                                <button type="button" class="btn-color-swatch" data-color="#000000" onclick="seleccionarSwatchColor('#000000', this)" style="background:#000000;" title="Negro Puro (#000000)"></button>
+                                <button type="button" class="btn-color-swatch" data-color="#ffffff" onclick="seleccionarSwatchColor('#ffffff', this)" style="background:#ffffff;" title="Blanco (#ffffff)"></button>
+                                <button type="button" class="btn-color-swatch" data-color="#00ff00" onclick="seleccionarSwatchColor('#00ff00', this)" style="background:#00ff00;" title="Croma Verde (#00ff00)"></button>
+                                <button type="button" class="btn-color-swatch" data-color="#0033ff" onclick="seleccionarSwatchColor('#0033ff', this)" style="background:#0033ff;" title="Croma Azul (#0033ff)"></button>
+                                <button type="button" class="btn-color-swatch" data-color="#ff007f" onclick="seleccionarSwatchColor('#ff007f', this)" style="background:#ff007f;" title="Rosa Neón (#ff007f)"></button>
+                                <button type="button" class="btn-color-swatch" data-color="#ffcc00" onclick="seleccionarSwatchColor('#ffcc00', this)" style="background:#ffcc00;" title="Amarillo Funkin (#ffcc00)"></button>
+                                <button type="button" class="btn-color-swatch" data-color="#3a3b4c" onclick="seleccionarSwatchColor('#3a3b4c', this)" style="background:#3a3b4c;" title="Gris Estudio (#3a3b4c)"></button>
+                                <button type="button" class="btn-color-swatch" data-color="#00e5ff" onclick="seleccionarSwatchColor('#00e5ff', this)" style="background:#00e5ff;" title="Cian Brillante (#00e5ff)"></button>
+                                <button type="button" class="btn-color-swatch" data-color="#8b00ff" onclick="seleccionarSwatchColor('#8b00ff', this)" style="background:#8b00ff;" title="Morado Oscuro (#8b00ff)"></button>
+                            </div>
                         </div>
                     </div>
                     
