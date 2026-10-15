@@ -3,12 +3,13 @@ const CHANGELOG_DATA = [
         version: "1.5.1",
         date: "Reciente",
         changes: [
-            "<b><span style='color: #ddff00ff;'>[Generador GIF Animado]</span> Estas mejoras solo estan para esa funcion.</b>",
+            "<b><span style='color: #00e5ff;'>[MEJORA] Optimizador (Alineación Psych Engine):</span></b> Cálculo matemático automático de posición [X, Y] y escala en el .JSON al optimizar resolución. Evita desfasar o que el personaje flote en el escenario.",
+            "<b><span style='color: #aaff00;'>[MEJORA] Rueda de Carga:</span></b> Proceso guiado con fases matemáticas detalladas y confirmación interactiva en el badge del JSON importado.",
             "<b><span style='color: #ffaa00;'>[MEJORA]</span> Arquitectura:</b> Separación de herramientas en múltiples páginas para una carga drásticamente más rápida en móviles.",
             "<b><span style='color: #00ff88;'>[MEJORA]</span> Sincronización Musical BPM:</b> Mejora el ajuste de delays por frame en centisegundos para que los GIFs encajen perfectamente con cualquier canción sin repetir frames innecesariamente.",
+            "<b><span style='color: #00e5ff;'>[NUEVO]</span> Control de Fondo para GIFs:</b> Opción de fondo transparente o fondo de color sólido con paleta interactiva y selector personalizado.",
             "<b><span style='color: #00ff88;'>[MEJORA]</span> Sistema de recortes:</b> Mejoras al realizar cajas o recortes para mejor facilidad.",
-            "<b><span style='color: #aaa;'>[CORRECCIÓN]</span></b> Corrección de errores y mejoras de vizulización."
-
+            "<b><span style='color: #aaa;'>[CORRECCIÓN]</span></b> Corrección de errores y mejoras de visualización."
         ]
     },
     {

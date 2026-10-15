@@ -150,23 +150,48 @@ async function iniciarModoA() {
         if(img.height > maxHeight) maxHeight = img.height;
     }
     
-    for(let i=0; i<loadedImages.length; i++) {
-        let img = loadedImages[i];
+    window.archivosSueltosCargados = loadedImages;
+    window.archivosSueltosDims = { width: maxWidth, height: maxHeight };
+    renderizarFramesSueltos();
+}
+
+function renderizarFramesSueltos() {
+    if (!window.archivosSueltosCargados || window.archivosSueltosCargados.length === 0) return;
+    let maxWidth = window.archivosSueltosDims.width;
+    let maxHeight = window.archivosSueltosDims.height;
+    window.framesPreRenderizados = [];
+    window.framesCanvasOriginales = [];
+    
+    for(let i=0; i<window.archivosSueltosCargados.length; i++) {
+        let img = window.archivosSueltosCargados[i];
+        let dx = (maxWidth - img.width) / 2;
+        let dy = (maxHeight - img.height) / 2;
+        
+        let cOrig = document.createElement('canvas');
+        cOrig.width = maxWidth;
+        cOrig.height = maxHeight;
+        let ctxOrig = cOrig.getContext('2d');
+        ctxOrig.drawImage(img, dx, dy);
+        window.framesCanvasOriginales.push(cOrig);
+        
         let c = document.createElement('canvas');
         c.width = maxWidth;
         c.height = maxHeight;
         let ctx = c.getContext('2d');
         
-        ctx.fillStyle = '#1a1a2e'; // Evitar frames fantasmas de gifshot
-        ctx.fillRect(0, 0, maxWidth, maxHeight);
-        
-        let dx = (maxWidth - img.width) / 2;
-        let dy = (maxHeight - img.height) / 2;
+        if (window.gifBgMode === 'color') {
+            ctx.fillStyle = window.gifBgColor;
+            ctx.fillRect(0, 0, maxWidth, maxHeight);
+        } else {
+            ctx.clearRect(0, 0, maxWidth, maxHeight);
+        }
         
         ctx.drawImage(img, dx, dy);
         window.framesPreRenderizados.push(c.toDataURL('image/png'));
     }
     
+    let bgCont = document.getElementById('gifBgContainer');
+    if (bgCont) bgCont.style.display = 'flex';
     document.getElementById('txtFrameCount').textContent = `${window.framesPreRenderizados.length} Frames`;
     document.getElementById('previewPlaceholder').style.display = 'none';
     document.getElementById('previewGifImg').style.display = 'block';
@@ -289,6 +314,8 @@ async function iniciarModoB() {
     
     let bpmCont = document.getElementById('bpmContainerGif');
     if (bpmCont) bpmCont.style.display = 'none';
+    let bgCont = document.getElementById('gifBgContainer');
+    if (bgCont) bgCont.style.display = 'none';
     
     let seq = document.getElementById('gifSequencer');
     if (seq) seq.style.display = 'none';
@@ -519,12 +546,75 @@ function volverACortadorGif() {
     document.getElementById('gifCropContainer').style.display = 'block';
     let bpmCont = document.getElementById('bpmContainerGif');
     if (bpmCont) bpmCont.style.display = 'none';
+    let bgCont = document.getElementById('gifBgContainer');
+    if (bgCont) bgCont.style.display = 'none';
     let prevBox = document.getElementById('previewBoxGif');
     if (prevBox) prevBox.style.display = 'none';
     document.getElementById('btnGenerarGif').style.display = 'none';
     document.getElementById('btnDescargarGif').style.display = 'none';
     document.getElementById('gifSequencer').style.display = 'none';
     actualizarCSSCrop();
+}
+
+function renderizarFramesModoB() {
+    if (!gifCajas || gifCajas.length === 0 || !imgSpritesheet) return;
+    window.framesPreRenderizados = [];
+    window.framesCanvasOriginales = [];
+    
+    let maxWidth = 0;
+    let maxHeight = 0;
+    gifCajas.forEach(caja => {
+        if (caja.w > maxWidth) maxWidth = caja.w;
+        if (caja.h > maxHeight) maxHeight = caja.h;
+    });
+    
+    gifCajas.forEach(caja => {
+        let dx = (maxWidth - caja.w) / 2;
+        let dy = (maxHeight - caja.h) / 2;
+        
+        let cOrig = document.createElement('canvas');
+        cOrig.width = maxWidth;
+        cOrig.height = maxHeight;
+        let ctxOrig = cOrig.getContext('2d');
+        ctxOrig.drawImage(imgSpritesheet, caja.x, caja.y, caja.w, caja.h, dx, dy, caja.w, caja.h);
+        window.framesCanvasOriginales.push(cOrig);
+        
+        let c = document.createElement('canvas');
+        c.width = maxWidth;
+        c.height = maxHeight;
+        let ctx = c.getContext('2d');
+        
+        if (window.gifBgMode === 'color') {
+            ctx.fillStyle = window.gifBgColor;
+            ctx.fillRect(0, 0, maxWidth, maxHeight);
+        } else {
+            ctx.clearRect(0, 0, maxWidth, maxHeight);
+        }
+        
+        ctx.drawImage(imgSpritesheet, caja.x, caja.y, caja.w, caja.h, dx, dy, caja.w, caja.h);
+        window.framesPreRenderizados.push(c.toDataURL('image/png'));
+    });
+    
+    document.getElementById('gifCropContainer').style.display = 'none';
+    let bgCont = document.getElementById('gifBgContainer');
+    if (bgCont) bgCont.style.display = 'flex';
+    let bpmCont = document.getElementById('bpmContainerGif');
+    if (bpmCont) bpmCont.style.display = 'flex';
+    let prevBox = document.getElementById('previewBoxGif');
+    if (prevBox) prevBox.style.display = 'flex';
+    document.getElementById('txtFrameCount').textContent = `${window.framesPreRenderizados.length} Frames`;
+    document.getElementById('previewPlaceholder').style.display = 'none';
+    document.getElementById('previewGifImg').style.display = 'block';
+    document.getElementById('btnGenerarGif').style.display = 'block';
+    
+    let seq = document.getElementById('gifSequencer');
+    if (seq) seq.style.display = 'block';
+    
+    let btnVolver = document.getElementById('btnVolverACortador');
+    if (btnVolver) btnVolver.style.display = 'block';
+    
+    renderizarSecuenciadorGif();
+    actualizarBPM();
 }
 
 function extraerFramesGif() {
@@ -535,49 +625,7 @@ function extraerFramesGif() {
     
     mostrarCargaGlobal("Extrayendo frames...");
     setTimeout(() => {
-        window.framesPreRenderizados = [];
-        
-        let maxWidth = 0;
-        let maxHeight = 0;
-        gifCajas.forEach(caja => {
-            if (caja.w > maxWidth) maxWidth = caja.w;
-            if (caja.h > maxHeight) maxHeight = caja.h;
-        });
-        
-        gifCajas.forEach(caja => {
-            let c = document.createElement('canvas');
-            c.width = maxWidth;
-            c.height = maxHeight;
-            let ctx = c.getContext('2d');
-            
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(0, 0, maxWidth, maxHeight);
-            
-            let dx = (maxWidth - caja.w) / 2;
-            let dy = (maxHeight - caja.h) / 2;
-            
-            ctx.drawImage(imgSpritesheet, caja.x, caja.y, caja.w, caja.h, dx, dy, caja.w, caja.h);
-            window.framesPreRenderizados.push(c.toDataURL('image/png'));
-        });
-        
-        document.getElementById('gifCropContainer').style.display = 'none';
-        let bpmCont = document.getElementById('bpmContainerGif');
-        if (bpmCont) bpmCont.style.display = 'flex';
-        let prevBox = document.getElementById('previewBoxGif');
-        if (prevBox) prevBox.style.display = 'flex';
-        document.getElementById('txtFrameCount').textContent = `${window.framesPreRenderizados.length} Frames`;
-        document.getElementById('previewPlaceholder').style.display = 'none';
-        document.getElementById('previewGifImg').style.display = 'block';
-        document.getElementById('btnGenerarGif').style.display = 'block';
-        
-        let seq = document.getElementById('gifSequencer');
-        if (seq) seq.style.display = 'block';
-        
-        let btnVolver = document.getElementById('btnVolverACortador');
-        if (btnVolver) btnVolver.style.display = 'block';
-        
-        renderizarSecuenciadorGif();
-        actualizarBPM();
+        renderizarFramesModoB();
         ocultarCargaGlobal();
     }, 100);
 }
@@ -838,6 +886,120 @@ let audioCtxMetronomo = null;
 let metronomoAudioActivo = false;
 let ultimoBeatPulse = -1;
 
+window.gifBgMode = 'transparent'; // 'transparent' | 'color'
+window.gifBgColor = '#1a1a2e';
+window.framesCanvasOriginales = [];
+window.archivosSueltosCargados = [];
+window.archivosSueltosDims = { width: 0, height: 0 };
+
+function seleccionarModoFondoGif(modo) {
+    window.gifBgMode = modo;
+    let btnTrans = document.getElementById('btnBgModoTransparente');
+    let btnCol = document.getElementById('btnBgModoColor');
+    let panelPaleta = document.getElementById('panelPaletaColoresGif');
+    let badge = document.getElementById('badgeFondoActual');
+    let prevBox = document.querySelector('.preview-box') || document.getElementById('previewBoxGif');
+
+    if (modo === 'transparent') {
+        if (btnTrans) btnTrans.classList.add('active');
+        if (btnCol) btnCol.classList.remove('active');
+        if (panelPaleta) panelPaleta.style.display = 'none';
+        if (badge) {
+            badge.textContent = 'Transparente';
+            badge.style.color = 'var(--accent)';
+            badge.style.borderColor = 'var(--accent)';
+            badge.style.background = 'rgba(0, 229, 255, 0.15)';
+        }
+        if (prevBox) {
+            prevBox.style.backgroundColor = '#a0a0a0';
+            prevBox.style.backgroundImage = 'repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%)';
+        }
+    } else {
+        if (btnTrans) btnTrans.classList.remove('active');
+        if (btnCol) btnCol.classList.add('active');
+        if (panelPaleta) panelPaleta.style.display = 'flex';
+        if (badge) {
+            badge.textContent = window.gifBgColor.toUpperCase();
+            badge.style.color = '#fff';
+            badge.style.borderColor = window.gifBgColor;
+            badge.style.background = window.gifBgColor;
+        }
+        if (prevBox) {
+            prevBox.style.backgroundImage = 'none';
+            prevBox.style.backgroundColor = window.gifBgColor;
+        }
+    }
+
+    regenerarFramesSegunModo();
+}
+
+function cambiarColorFondoGif(colorHex) {
+    window.gifBgColor = colorHex;
+    let lbl = document.getElementById('lblColorFondoHex');
+    if (lbl) lbl.textContent = colorHex.toLowerCase();
+    let picker = document.getElementById('pickerColorFondoGif');
+    if (picker && picker.value !== colorHex) picker.value = colorHex;
+    let badge = document.getElementById('badgeFondoActual');
+    if (badge && window.gifBgMode === 'color') {
+        badge.textContent = colorHex.toUpperCase();
+        badge.style.borderColor = colorHex;
+        badge.style.background = colorHex;
+    }
+    let prevBox = document.querySelector('.preview-box') || document.getElementById('previewBoxGif');
+    if (prevBox && window.gifBgMode === 'color') {
+        prevBox.style.backgroundImage = 'none';
+        prevBox.style.backgroundColor = colorHex;
+    }
+
+    document.querySelectorAll('.btn-color-swatch').forEach(sw => {
+        if (sw.getAttribute('data-color').toLowerCase() === colorHex.toLowerCase()) {
+            sw.classList.add('active');
+        } else {
+            sw.classList.remove('active');
+        }
+    });
+
+    if (window.gifBgMode !== 'color') {
+        seleccionarModoFondoGif('color');
+    } else {
+        regenerarFramesSegunModo();
+    }
+}
+
+function seleccionarSwatchColor(colorHex, btnEl) {
+    document.querySelectorAll('.btn-color-swatch').forEach(b => b.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+    cambiarColorFondoGif(colorHex);
+}
+
+function regenerarFramesSegunModo() {
+    let btnGen = document.getElementById('btnGenerarGif');
+    let btnDown = document.getElementById('btnDescargarGif');
+    if (btnGen && btnDown && btnDown.style.display === 'block') {
+        btnGen.style.display = 'block';
+        btnDown.style.display = 'none';
+    }
+
+    // Modo A: Archivos sueltos
+    if (window.archivosSueltosCargados && window.archivosSueltosCargados.length > 0) {
+        renderizarFramesSueltos();
+        return;
+    }
+
+    // Modo B: Solo PNG
+    if (typeof modoActual !== 'undefined' && modoActual === 'B' && window.gifCajas && window.gifCajas.length > 0 && window.imgSpritesheet) {
+        renderizarFramesModoB();
+        return;
+    }
+
+    // Modo C: XML + PNG
+    let selectXml = document.getElementById('selectAnimacionXML');
+    if (selectXml && selectXml.value && window.animacionesDisponibles && window.animacionesDisponibles[selectXml.value]) {
+        actualizarVistaPrevia();
+        return;
+    }
+}
+
 function obtenerBpmActual() {
     let inputNum = document.getElementById('inputBpmNum');
     let slider = document.getElementById('sliderBpm');
@@ -1008,6 +1170,7 @@ async function actualizarVistaPrevia() {
     
     // Generar canvas de cada frame
     window.framesPreRenderizados = [];
+    window.framesCanvasOriginales = [];
     
     let maxWidth = 0;
     let maxHeight = 0;
@@ -1018,20 +1181,34 @@ async function actualizarVistaPrevia() {
     
     for (let i=0; i<frames.length; i++) {
         let f = frames[i];
+        let dx = Math.abs(f.frameX);
+        let dy = Math.abs(f.frameY);
+        
+        let cOrig = document.createElement('canvas');
+        cOrig.width = maxWidth;
+        cOrig.height = maxHeight;
+        let ctxOrig = cOrig.getContext('2d');
+        ctxOrig.drawImage(imgSpritesheet, f.x, f.y, f.width, f.height, dx, dy, f.width, f.height);
+        window.framesCanvasOriginales.push(cOrig);
+        
         let c = document.createElement('canvas');
         c.width = maxWidth;
         c.height = maxHeight;
         let ctx = c.getContext('2d');
         
-        ctx.fillStyle = '#1a1a2e';
-        ctx.fillRect(0, 0, maxWidth, maxHeight);
-        
-        let dx = Math.abs(f.frameX);
-        let dy = Math.abs(f.frameY);
+        if (window.gifBgMode === 'color') {
+            ctx.fillStyle = window.gifBgColor;
+            ctx.fillRect(0, 0, maxWidth, maxHeight);
+        } else {
+            ctx.clearRect(0, 0, maxWidth, maxHeight);
+        }
         
         ctx.drawImage(imgSpritesheet, f.x, f.y, f.width, f.height, dx, dy, f.width, f.height);
         window.framesPreRenderizados.push(c.toDataURL('image/png'));
     }
+    
+    let bgCont = document.getElementById('gifBgContainer');
+    if (bgCont) bgCont.style.display = 'flex';
     
     document.getElementById('previewPlaceholder').style.display = 'none';
     document.getElementById('previewGifImg').style.display = 'block';
@@ -1045,11 +1222,15 @@ async function actualizarVistaPrevia() {
 
 function renderizarSecuenciadorGif() {
     let track = document.getElementById('gifSequencerTrack');
+    if (!track) return;
     track.innerHTML = '';
+    
+    let isColor = (window.gifBgMode === 'color');
+    let cardBg = isColor ? window.gifBgColor : 'repeating-conic-gradient(#808080 0% 25%, #666 0% 50%) 50% / 10px 10px';
     
     window.framesPreRenderizados.forEach((frameData, index) => {
         let card = document.createElement('div');
-        card.style.cssText = "position:relative; width:80px; height:80px; background:#fff; border-radius:5px; flex-shrink:0; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.5); border: 2px solid #555;";
+        card.style.cssText = `position:relative; width:80px; height:80px; background:${cardBg}; border-radius:5px; flex-shrink:0; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.5); border: 2px solid #555;`;
         
         let img = document.createElement('img');
         img.src = frameData;
@@ -1067,6 +1248,9 @@ function renderizarSecuenciadorGif() {
         btnDup.style.cssText = "position:absolute; top:-5px; right:15px; width:20px; height:20px; background:#4CAF50; color:#fff; border-radius:50%; text-align:center; line-height:20px; font-weight:bold; cursor:pointer; font-size:14px; z-index:10;";
         btnDup.onclick = () => {
             window.framesPreRenderizados.splice(index + 1, 0, frameData);
+            if (window.framesCanvasOriginales && window.framesCanvasOriginales.length > index) {
+                window.framesCanvasOriginales.splice(index + 1, 0, window.framesCanvasOriginales[index]);
+            }
             document.getElementById('txtFrameCount').textContent = `${window.framesPreRenderizados.length} Frames`;
             renderizarSecuenciadorGif();
             actualizarBPM();
@@ -1080,6 +1264,9 @@ function renderizarSecuenciadorGif() {
         btnDel.onclick = () => {
             if(window.framesPreRenderizados.length > 1) {
                 window.framesPreRenderizados.splice(index, 1);
+                if (window.framesCanvasOriginales && window.framesCanvasOriginales.length > index) {
+                    window.framesCanvasOriginales.splice(index, 1);
+                }
                 document.getElementById('txtFrameCount').textContent = `${window.framesPreRenderizados.length} Frames`;
                 renderizarSecuenciadorGif();
                 actualizarBPM();
@@ -1162,7 +1349,40 @@ function calcularDelaysPorFrame(duracionTotalSecs, numFrames) {
     return delays;
 }
 
-function ajustarDelaysEnGifDataUrl(dataUrl, frameDelaysCentisecs) {
+function prepararFramesCromaParaGifshot(cromaKeyHex) {
+    let framesCroma = [];
+    if (window.framesCanvasOriginales && window.framesCanvasOriginales.length === window.framesPreRenderizados.length) {
+        for (let i = 0; i < window.framesCanvasOriginales.length; i++) {
+            let orig = window.framesCanvasOriginales[i];
+            let c = document.createElement('canvas');
+            c.width = orig.width;
+            c.height = orig.height;
+            let ctx = c.getContext('2d');
+            ctx.fillStyle = cromaKeyHex;
+            ctx.fillRect(0, 0, c.width, c.height);
+            ctx.drawImage(orig, 0, 0);
+            framesCroma.push(c.toDataURL('image/png'));
+        }
+        return framesCroma;
+    }
+    
+    for (let i = 0; i < window.framesPreRenderizados.length; i++) {
+        let dataUrl = window.framesPreRenderizados[i];
+        let img = new Image();
+        img.src = dataUrl;
+        let c = document.createElement('canvas');
+        c.width = img.naturalWidth || img.width || 300;
+        c.height = img.naturalHeight || img.height || 300;
+        let ctx = c.getContext('2d');
+        ctx.fillStyle = cromaKeyHex;
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0);
+        framesCroma.push(c.toDataURL('image/png'));
+    }
+    return framesCroma;
+}
+
+function ajustarDelaysEnGifDataUrl(dataUrl, frameDelaysCentisecs, esTransparente, cromaRgb) {
     try {
         let base64 = dataUrl.split(',')[1];
         let binary = atob(base64);
@@ -1171,10 +1391,42 @@ function ajustarDelaysEnGifDataUrl(dataUrl, frameDelaysCentisecs) {
             bytes[i] = binary.charCodeAt(i);
         }
         
+        // Si es transparente, buscar el índice del color croma en la Tabla Global de Colores (GCT)
+        let transparentColorIndex = 0;
+        if (esTransparente && cromaRgb && bytes.length > 13) {
+            let packed = bytes[10];
+            let hasGct = (packed & 0x80) !== 0;
+            if (hasGct) {
+                let colorCount = 1 << ((packed & 0x07) + 1);
+                let bestDist = Infinity;
+                for (let c = 0; c < colorCount; c++) {
+                    let offset = 13 + c * 3;
+                    if (offset + 2 < bytes.length) {
+                        let r = bytes[offset];
+                        let g = bytes[offset + 1];
+                        let b = bytes[offset + 2];
+                        let dist = Math.abs(r - cromaRgb[0]) + Math.abs(g - cromaRgb[1]) + Math.abs(b - cromaRgb[2]);
+                        if (dist < bestDist) {
+                            bestDist = dist;
+                            transparentColorIndex = c;
+                        }
+                    }
+                }
+            }
+        }
+        
         let frameIdx = 0;
         for (let i = 0; i < bytes.length - 8; i++) {
             // Cabecera de Graphic Control Extension (GCE): 0x21, 0xF9, 0x04 y terminator 0x00
             if (bytes[i] === 0x21 && bytes[i + 1] === 0xF9 && bytes[i + 2] === 0x04 && bytes[i + 7] === 0x00) {
+                // Byte 3: Packed fields: (disposal << 2) | (transparent_flag)
+                if (esTransparente) {
+                    bytes[i + 3] = (2 << 2) | 1; // disposal = 2 (restore to background), transparency = 1
+                    bytes[i + 6] = transparentColorIndex; // transparent color index
+                } else {
+                    bytes[i + 3] = (2 << 2); // disposal = 2, no transparency
+                }
+                
                 if (frameIdx < frameDelaysCentisecs.length) {
                     let delay = Math.max(1, Math.round(frameDelaysCentisecs[frameIdx]));
                     bytes[i + 4] = delay & 0xFF;        // Delay LSB
@@ -1192,24 +1444,33 @@ function ajustarDelaysEnGifDataUrl(dataUrl, frameDelaysCentisecs) {
         }
         return 'data:image/gif;base64,' + btoa(nuevoBinary);
     } catch(err) {
-        console.warn("No se pudo parchear los delays del GIF, usando salida directa:", err);
+        console.warn("No se pudo parchear los delays o fondo del GIF, usando salida directa:", err);
         return dataUrl;
     }
 }
 
 function generarGif() {
-    if(window.framesPreRenderizados.length === 0) return;
+    if(!window.framesPreRenderizados || window.framesPreRenderizados.length === 0) return;
     
     let duracionCicloMs = calcularDuracionCicloMs();
     let numFrames = window.framesPreRenderizados.length;
     let duracionTotalSecs = duracionCicloMs / 1000;
     let intervalSecs = duracionTotalSecs / numFrames;
     
-    mostrarCargaGlobal("Codificando la animación al BPM exacto, por favor espera...<br><span style='color:var(--accent-pink); font-size: 0.8rem;'>⚠️ Tu pantalla se congelará un momento, es normal.</span>");
+    mostrarCargaGlobal("Codificando la animación al BPM y fondo seleccionados...<br><span style='color:var(--accent-pink); font-size: 0.8rem;'>⚠️ Tu pantalla se congelará un momento, es normal.</span>");
+    
+    let esTransparente = (window.gifBgMode === 'transparent');
+    let cromaKeyHex = '#00fe0b';
+    let cromaRgb = [0, 254, 11];
+    let framesParaCodificar = window.framesPreRenderizados;
+    
+    if (esTransparente) {
+        framesParaCodificar = prepararFramesCromaParaGifshot(cromaKeyHex);
+    }
     
     setTimeout(() => {
         gifshot.createGIF({
-            images: window.framesPreRenderizados,
+            images: framesParaCodificar,
             gifWidth: document.getElementById('previewGifImg').naturalWidth || 300,
             gifHeight: document.getElementById('previewGifImg').naturalHeight || 300,
             interval: intervalSecs,
@@ -1220,9 +1481,9 @@ function generarGif() {
             if(!obj.error) {
                 let image = obj.image;
                 
-                // Parchear delays exactos en los metadatos del GIF para que coincida matemáticamente con la música
+                // Parchear delays exactos y canal de transparencia en los metadatos del GIF
                 let delaysCentisecs = calcularDelaysPorFrame(duracionTotalSecs, numFrames);
-                let gifFinal = ajustarDelaysEnGifDataUrl(image, delaysCentisecs);
+                let gifFinal = ajustarDelaysEnGifDataUrl(image, delaysCentisecs, esTransparente, cromaRgb);
                 
                 document.getElementById('previewGifImg').src = gifFinal;
                 if (animRafId) cancelAnimationFrame(animRafId);

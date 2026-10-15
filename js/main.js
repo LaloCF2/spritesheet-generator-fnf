@@ -293,6 +293,7 @@ function showLoader(titulo, mensaje) {
 function loadMainImage(file, callback) {
     if (!file) return; mostrarCargaGlobal("Cargando imagen PNG..."); nombreArchivo = file.name;
     window.lastResizeFactor = 1.0;
+    window.totalResizeFactor = 1.0;
     const reader = new FileReader();
     reader.onload = (event) => {
         imgOriginal = new Image();
@@ -343,12 +344,18 @@ function checkDual(mode) {
 function parseSparrowXML(xmlString) {
     let parser = new DOMParser(); let xmlDoc = parser.parseFromString(xmlString, "text/xml");
     let subTextures = xmlDoc.getElementsByTagName("SubTexture"); spritesDetectados = [];
+    window.lastResizeFactor = 1.0;
+    window.totalResizeFactor = 1.0;
     for (let i = 0; i < subTextures.length; i++) {
         let st = subTextures[i]; let w = parseInt(st.getAttribute("width")); let h = parseInt(st.getAttribute("height"));
+        let fw = parseInt(st.getAttribute("frameWidth")) || w;
+        let fh = parseInt(st.getAttribute("frameHeight")) || h;
         spritesDetectados.push({
             name: st.getAttribute("name"), x: parseInt(st.getAttribute("x")), y: parseInt(st.getAttribute("y")), w: w, h: h,
             frameX: parseInt(st.getAttribute("frameX")) || 0, frameY: parseInt(st.getAttribute("frameY")) || 0,
-            frameWidth: parseInt(st.getAttribute("frameWidth")) || w, frameHeight: parseInt(st.getAttribute("frameHeight")) || h, angle: st.getAttribute("rotated") === "true" ? 90 : 0
+            frameWidth: fw, frameHeight: fh,
+            origFrameWidth: fw, origFrameHeight: fh,
+            angle: st.getAttribute("rotated") === "true" ? 90 : 0
         });
     }
 }
