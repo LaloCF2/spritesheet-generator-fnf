@@ -76,28 +76,54 @@ body.dark-mode .home-card:hover {
 
 .scan-manual-tools {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     background: var(--panel);
-    padding: 12px;
-    border-radius: 16px;
+    padding: 10px;
+    border-radius: 14px;
     border: 1px solid var(--glass-border);
     flex-wrap: wrap;
     justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .tool-btn {
     background: rgba(255, 255, 255, 0.5);
     border: 1px solid white;
     color: var(--text);
-    padding: 8px 15px;
+    padding: 8px 14px;
     border-radius: 10px;
     cursor: pointer;
     font-weight: bold;
     font-size: 0.85rem;
-    display: flex;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     transition: 0.2s;
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    .scan-manual-tools {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+        padding: 8px;
+    }
+
+    .tool-btn {
+        width: 100%;
+        padding: 8px 4px;
+        font-size: 0.78rem;
+        gap: 4px;
+    }
+
+    .tool-btn .icon, .tool-btn .icon-black {
+        width: 16px;
+        height: 16px;
+    }
 }
 
 .tool-btn.active {
@@ -127,6 +153,15 @@ body.dark-mode .home-card:hover {
     touch-action: none;
     position: relative;
     box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .canvas-wrapper {
+        min-height: 250px;
+        height: clamp(250px, 44vh, 420px);
+        border-radius: 12px;
+    }
 }
 
 canvas#canvasSprites, canvas#gifCropCanvas {
@@ -160,12 +195,15 @@ canvas#canvasSprites, canvas#gifCropCanvas {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
     margin-top: 5px;
     background: var(--panel);
-    padding: 10px;
+    padding: 8px 10px;
     border-radius: 12px;
     border: 1px solid var(--glass-border);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .btn-zoom {
@@ -173,9 +211,9 @@ canvas#canvasSprites, canvas#gifCropCanvas {
     border: none;
     color: var(--text);
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 1.2rem;
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
     cursor: pointer;
     font-weight: bold;
     display: flex;
@@ -183,14 +221,19 @@ canvas#canvasSprites, canvas#gifCropCanvas {
     justify-content: center;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     transition: 0.2s;
+    flex-shrink: 0;
 }
 
 .btn-zoom:hover {
-    transform: scale(1.1);
+    transform: scale(1.08);
 }
 
 #txtZoom, #txtZoomGif {
     color: var(--text);
+    font-weight: bold;
+    width: 55px;
+    text-align: center;
+    flex-shrink: 0;
 }
 
 #bgScannerSelect, #bgScannerSelectGif {
@@ -202,6 +245,33 @@ canvas#canvasSprites, canvas#gifCropCanvas {
     font-weight: bold;
     outline: none;
     cursor: pointer;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 500px) {
+    .panel-zoom {
+        gap: 6px;
+        padding: 6px 8px;
+    }
+
+    #bgScannerSelect, #bgScannerSelectGif {
+        width: 100%;
+        text-align: center;
+        font-size: 0.82rem;
+        padding: 7px 8px;
+        order: 2;
+    }
+
+    .btn-zoom {
+        width: 34px;
+        height: 34px;
+    }
+
+    #txtZoom, #txtZoomGif {
+        font-size: 0.85rem;
+        width: 45px;
+    }
 }
 
 body.dark-mode #bgScannerSelect, body.dark-mode #bgScannerSelectGif {
@@ -761,6 +831,105 @@ body.dark-mode .tuner-nav-bar button:hover {
     text-align: center;
     justify-content: center;
     padding: 20px;
+}
+
+/* ==========================================
+   ADAPTABILIDAD RESPONSIVE: HERRAMIENTAS GIF
+========================================== */
+.bpm-slider-container,
+.gif-bg-selector-container {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.bpm-controls-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: 2px;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+}
+
+.gif-canvas-actions-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+    .gif-canvas-actions-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .gif-canvas-actions-bar > button,
+    .gif-canvas-actions-bar > div {
+        width: 100% !important;
+        justify-content: center !important;
+        text-align: center !important;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 480px) {
+    .bpm-slider-container,
+    .gif-bg-selector-container {
+        padding: 12px 10px !important;
+        border-radius: 10px !important;
+        gap: 10px !important;
+    }
+
+    .bpm-controls-row {
+        gap: 6px;
+    }
+
+    .bpm-controls-row .slider-label {
+        font-size: 0.82rem;
+        min-width: 45px !important;
+    }
+
+    .bpm-controls-row input[type=range] {
+        min-width: 80px !important;
+    }
+
+    .btn-step-bpm {
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 1rem !important;
+    }
+
+    .bpm-controls-row #inputBpmNum {
+        width: 45px !important;
+        font-size: 0.95rem !important;
+    }
+
+    .btn-rhythm {
+        flex: 1 1 calc(50% - 6px);
+        justify-content: center;
+        text-align: center;
+        padding: 6px 8px !important;
+        font-size: 0.75rem !important;
+    }
+
+    .color-palette-swatches {
+        gap: 6px !important;
+        justify-content: center;
+    }
+
+    .btn-color-swatch {
+        width: 28px !important;
+        height: 28px !important;
+    }
+
+    .preview-box {
+        min-height: 180px !important;
+    }
 }
 
 

@@ -283,4 +283,28 @@ body {
     }
 }
 
+@media (max-width: 768px) {
+    .main-workspace {
+        padding: 12px 8px 90px 8px;
+    }
+
+    .window-content {
+        padding: 16px 12px;
+        border-radius: 18px;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-workspace {
+        padding: 8px 4px 85px 4px;
+    }
+
+    .window-content {
+        padding: 12px 8px;
+        border-radius: 14px;
+        gap: 10px;
+    }
+}
+
 /* ==========================================

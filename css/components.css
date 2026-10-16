@@ -213,26 +213,28 @@ body {
     cursor: pointer;
 }
 
-/* MenÃƒÂº de Modos (Vista / EdiciÃƒÂ³n) */
+/* Menú de Modos (Vista / Edición) */
 .mode-toggle-bar {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
     background: rgba(255, 255, 255, 0.3);
     padding: 8px;
     border-radius: 16px;
     border: 1px solid var(--glass-border);
+    box-sizing: border-box;
 }
 
 .mode-btn {
     flex: 1;
-    padding: 12px;
+    min-width: 0;
+    padding: 10px 8px;
     border-radius: 12px;
     border: 1px solid transparent;
     background: transparent;
     color: var(--text-muted);
     font-weight: bold;
-    font-size: 0.9rem;
+    font-size: clamp(0.82rem, 2vw, 0.9rem);
     cursor: pointer;
     transition: 0.3s;
     display: flex;
@@ -240,6 +242,28 @@ body {
     align-items: center;
     justify-content: center;
     text-align: center;
+    box-sizing: border-box;
+}
+
+.mode-btn small {
+    font-size: clamp(0.65rem, 1.8vw, 0.72rem);
+    font-weight: normal;
+    line-height: 1.25;
+    margin-top: 3px;
+    display: block;
+}
+
+@media (max-width: 520px) {
+    .mode-toggle-bar {
+        flex-direction: column;
+        gap: 6px;
+        padding: 6px;
+    }
+
+    .mode-btn {
+        width: 100%;
+        padding: 10px 8px;
+    }
 }
 
 .mode-btn:hover {
@@ -405,6 +429,13 @@ body {
     animation: fadeInModal 0.5s ease;
 }
 
+#globalLoaderText {
+    text-align: center;
+    max-width: 520px;
+    padding: 0 15px;
+    line-height: 1.5;
+}
+
 .overlay-ia {
     position: fixed;
     top: 0;
@@ -549,6 +580,98 @@ body {
 }
 
 /* ==========================================
+   MODAL DE CHANGELOG / NOVEDADES ADAPTABLE
+========================================== */
+.modal-box-changelog {
+    width: min(92vw, 680px) !important;
+    max-width: 680px !important;
+    max-height: 85vh !important;
+    padding: 24px 22px 20px 22px !important;
+    border-radius: 20px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4), 0 0 25px rgba(255, 215, 0, 0.15) !important;
+}
+
+@media (min-width: 601px) and (max-width: 1024px) {
+    /* Tablet */
+    .modal-box-changelog {
+        width: min(88vw, 640px) !important;
+        max-width: 640px !important;
+        max-height: 84vh !important;
+        padding: 24px 22px 18px 22px !important;
+    }
+}
+
+@media (min-width: 1025px) {
+    /* Desktop */
+    .modal-box-changelog {
+        width: 680px !important;
+        max-width: 680px !important;
+        max-height: 82vh !important;
+        padding: 28px 26px 22px 26px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Móviles */
+    .modal-box-changelog {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        max-height: 88vh !important;
+        padding: 16px 12px 14px 12px !important;
+        border-radius: 16px !important;
+    }
+}
+
+.modal-box-changelog .modal-title {
+    flex-shrink: 0 !important;
+    margin-bottom: 12px !important;
+    font-size: clamp(1.15rem, 3.5vw, 1.45rem) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.modal-box-changelog .modal-body {
+    flex: 1 1 auto !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    padding-right: 6px !important;
+    margin-bottom: 12px !important;
+    overscroll-behavior: contain !important;
+}
+
+.modal-box-changelog .modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-box-changelog .modal-body::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+.modal-box-changelog .modal-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 215, 0, 0.35);
+    border-radius: 4px;
+}
+
+.modal-box-changelog .modal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-gold);
+}
+
+.modal-box-changelog .btn-modal-action {
+    flex-shrink: 0 !important;
+    margin-top: auto !important;
+    padding: 14px 18px !important;
+    font-size: clamp(0.92rem, 2.4vw, 1.05rem) !important;
+    border-radius: 12px !important;
+    width: 100% !important;
+}
+
+/* ==========================================
    UBICACIÓN DE BOTONES FLOTANTES INDIVIDUALES
 ========================================== */
 
@@ -615,3 +738,101 @@ body {
         right: 15px;
     }
 }
+
+/* ==========================================
+   ESTADOS DE BOTONES Y LOGS DE IMPORTACIÓN
+========================================== */
+.btn-import-success {
+    background: #4caf50 !important;
+    background-image: linear-gradient(135deg, #4caf50, #2e7d32) !important;
+    color: #ffffff !important;
+    border-color: #4caf50 !important;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.45) !important;
+}
+
+.btn-import-error {
+    background: #e91e63 !important;
+    background-image: linear-gradient(135deg, #ff3366, #c2185b) !important;
+    color: #ffffff !important;
+    border-color: #ff3366 !important;
+    box-shadow: 0 4px 15px rgba(255, 51, 102, 0.55) !important;
+    animation: btnShake 0.4s ease-in-out;
+}
+
+@keyframes btnShake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+
+.modal-box-log {
+    background: rgba(18, 18, 28, 0.96) !important;
+    border: 2px solid #ff3366 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 51, 102, 0.3) !important;
+    color: #eee !important;
+    max-width: 540px !important;
+    padding: 26px !important;
+    animation: popInModal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-box-log.log-corrupto {
+    border-color: #ff9800 !important;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 152, 0, 0.35) !important;
+}
+
+.modal-box-log.log-exito {
+    border-color: #4caf50 !important;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.8), 0 0 25px rgba(76, 175, 80, 0.35) !important;
+}
+
+@keyframes popInModal {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.toast-import-feedback {
+    position: fixed;
+    top: 25px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    z-index: 999999;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 0.92rem;
+    font-weight: bold;
+    color: #fff;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.toast-import-feedback.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+.toast-import-feedback.toast-error {
+    background: rgba(233, 30, 99, 0.95);
+    border: 1px solid #ff3366;
+    box-shadow: 0 8px 25px rgba(255, 51, 102, 0.5);
+}
+
+.toast-import-feedback.toast-warning {
+    background: rgba(255, 152, 0, 0.95);
+    border: 1px solid #ffb74d;
+    box-shadow: 0 8px 25px rgba(255, 152, 0, 0.5);
+}
+
+.toast-import-feedback.toast-success {
+    background: rgba(76, 175, 80, 0.95);
+    border: 1px solid #81c784;
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5);
+}
