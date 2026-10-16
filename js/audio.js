@@ -7,29 +7,94 @@ var oggFileName = "audio.ogg";
 var oggOriginalSize = 0;
 
 document.getElementById('audioUpload')?.addEventListener('change', async (e) => {
-    let file = e.target.files[0];
-    if (!file) return;
+    let inp = e.target;
+    if (!inp.files || inp.files.length === 0) {
+        if (typeof window.setImportButtonState === 'function') {
+            window.setImportButtonState(inp, 'reset');
+        }
+        return;
+    }
 
-    mostrarCargaGlobal("Importando archivo de audio...");
-    await pensar(300);
+    mostrarCargaGlobal("Verificando e importando audio...");
 
-    oggFileOriginal = file;
-    oggFileName = file.name;
-    oggOriginalSize = file.size;
+    await window.validateAndProcessFile(inp, 'audio', {
+        onSuccess: async (file, buffer) => {
+            oggFileOriginal = file;
+            oggFileName = file.name;
+            oggOriginalSize = file.size;
 
-    document.getElementById('txtAudioOrigSize').textContent = (oggOriginalSize / 1024 / 1024).toFixed(2) + " MB";
-    document.getElementById('txtAudioNewSize').textContent = "---";
-    document.getElementById('txtAudioBPM').textContent = "Calculando...";
+            document.getElementById('txtAudioOrigSize').textContent = (oggOriginalSize / 1024 / 1024).toFixed(2) + " MB";
+            document.getElementById('txtAudioNewSize').textContent = "---";
+            document.getElementById('txtAudioBPM').textContent = "Calculando...";
 
-    document.getElementById('btnDownloadAudio').style.display = 'none';
-    document.getElementById('btnRunAudio').style.display = 'block';
+            document.getElementById('btnDownloadAudio').style.display = 'none';
+            document.getElementById('btnRunAudio').style.display = 'block';
 
-    detectBPM(file);
-    if (typeof window.autoSaveHistory === 'function') window.autoSaveHistory();
+            if (buffer) {
+                analizarBufferBPM(buffer);
+            } else {
+                detectBPM(file);
+            }
+            if (typeof window.autoSaveHistory === 'function') window.autoSaveHistory();
 
-    await pensar(500);
-    ocultarCargaGlobal();
+            await pensar(300);
+            ocultarCargaGlobal();
+        },
+        onError: () => {
+            oggFileOriginal = null;
+            document.getElementById('btnRunAudio').style.display = 'none';
+            ocultarCargaGlobal();
+        }
+    });
 });
+
+function analizarBufferBPM(buffer) {
+    try {
+        const data = buffer.getChannelData(0);
+        let peaks = [];
+        let threshold = 0.8;
+        let step = Math.round(buffer.sampleRate * 0.05);
+
+        for (let i = 0; i < data.length; i += step) {
+            if (data[i] > threshold) {
+                peaks.push(i / buffer.sampleRate);
+            }
+        }
+
+        if (peaks.length < 2) {
+            document.getElementById('txtAudioBPM').textContent = "---";
+            return;
+        }
+
+        let intervals = {};
+        for (let i = 1; i < peaks.length; i++) {
+            let interval = Math.round((peaks[i] - peaks[i - 1]) * 100) / 100;
+            if (interval > 0.2 && interval < 2.0) {
+                intervals[interval] = (intervals[interval] || 0) + 1;
+            }
+        }
+
+        let mostCommon = null;
+        let maxCount = 0;
+        for (let k in intervals) {
+            if (intervals[k] > maxCount) {
+                maxCount = intervals[k];
+                mostCommon = parseFloat(k);
+            }
+        }
+
+        if (mostCommon) {
+            let bpm = Math.round(60 / mostCommon);
+            while (bpm < 90) bpm *= 2;
+            while (bpm > 180) bpm /= 2;
+            document.getElementById('txtAudioBPM').textContent = Math.round(bpm) + " BPM";
+        } else {
+            document.getElementById('txtAudioBPM').textContent = "---";
+        }
+    } catch (e) {
+        document.getElementById('txtAudioBPM').textContent = "---";
+    }
+}
 
 function detectBPM(file) {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();

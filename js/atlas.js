@@ -29,29 +29,50 @@ function handleAtlasFileDrop(file) {
 }
 
 var atlasAnimFileName = "Animation.json";
-document.getElementById('atlasAnimUpload')?.addEventListener('change', (e) => {
-    let file = e.target.files[0];
-    if (!file) return;
-    atlasAnimFileName = file.name;
-    let reader = new FileReader();
-    reader.onload = function (event) {
-        try {
-            atlasAnimObj = JSON.parse(event.target.result);
+var atlasAnimFileName = "Animation.json";
+document.getElementById('atlasAnimUpload')?.addEventListener('change', async (e) => {
+    let inp = e.target;
+    if (!inp.files || inp.files.length === 0) {
+        if (typeof window.setImportButtonState === 'function') window.setImportButtonState(inp, 'reset');
+        return;
+    }
+
+    await window.validateAndProcessFile(inp, 'json', {
+        customValidate: (json) => {
+            if (!json.AN && !json.ANIMATION && !json.metadata) {
+                return { error: "El archivo no contiene la estructura esperada de Adobe Animate (Animation.json)." };
+            }
+            return null;
+        },
+        onSuccess: (file, data) => {
+            atlasAnimFileName = file.name;
+            atlasAnimObj = data.obj;
             updateAtlasPreview();
-        } catch (err) { alert("Error: Animation JSON inválido."); }
-    };
-    reader.readAsText(file);
+        },
+        onError: () => {
+            atlasAnimObj = null;
+        }
+    });
 });
 
 var atlasJsonFileName = "spritemap.json";
-document.getElementById('atlasJsonUpload')?.addEventListener('change', (e) => {
-    let file = e.target.files[0];
-    if (!file) return;
-    atlasJsonFileName = file.name;
-    let reader = new FileReader();
-    reader.onload = function (event) {
-        try {
-            atlasJsonObj = JSON.parse(event.target.result);
+document.getElementById('atlasJsonUpload')?.addEventListener('change', async (e) => {
+    let inp = e.target;
+    if (!inp.files || inp.files.length === 0) {
+        if (typeof window.setImportButtonState === 'function') window.setImportButtonState(inp, 'reset');
+        return;
+    }
+
+    await window.validateAndProcessFile(inp, 'json', {
+        customValidate: (json) => {
+            if (!json.ATLAS && !json.frames) {
+                return { error: "El archivo no contiene la estructura de sprites (spritemap.json)." };
+            }
+            return null;
+        },
+        onSuccess: (file, data) => {
+            atlasJsonFileName = file.name;
+            atlasJsonObj = data.obj;
             animSpritesDict = {};
             if (atlasJsonObj.ATLAS && atlasJsonObj.ATLAS.SPRITES) {
                 atlasJsonObj.ATLAS.SPRITES.forEach(s => { animSpritesDict[s.SPRITE.name] = s.SPRITE; });
@@ -62,44 +83,54 @@ document.getElementById('atlasJsonUpload')?.addEventListener('change', (e) => {
                 }
             }
             updateAtlasPreview();
-        } catch (err) { alert("Error: Spritemap JSON inválido."); }
-    };
-    reader.readAsText(file);
+        },
+        onError: () => {
+            atlasJsonObj = null;
+        }
+    });
 });
 
 var atlasCharJsonObj = null;
 var atlasCharJsonFileName = "character.json";
-document.getElementById('atlasCharJsonUpload')?.addEventListener('change', (e) => {
-    let file = e.target.files[0];
-    if (!file) return;
-    atlasCharJsonFileName = file.name;
-    let reader = new FileReader();
-    reader.onload = function (event) {
-        try {
-            atlasCharJsonObj = JSON.parse(event.target.result);
+document.getElementById('atlasCharJsonUpload')?.addEventListener('change', async (e) => {
+    let inp = e.target;
+    if (!inp.files || inp.files.length === 0) {
+        if (typeof window.setImportButtonState === 'function') window.setImportButtonState(inp, 'reset');
+        return;
+    }
+
+    await window.validateAndProcessFile(inp, 'json', {
+        onSuccess: (file, data) => {
+            atlasCharJsonFileName = file.name;
+            atlasCharJsonObj = data.obj;
             let btn = document.getElementById('btnAtlasCharJson');
             if (btn) {
-                btn.style.background = '#ffaa00';
-                btn.style.color = '#000';
-                btn.style.border = 'none';
-                btn.innerHTML = `<img src="https://cdn-icons-png.flaticon.com/128/190/190411.png" class="icon icon-black" alt="Check"> CARGADO: ${atlasCharJsonFileName}`;
+                btn.innerHTML = `<img src="https://cdn-icons-png.flaticon.com/128/190/190411.png" class="icon" style="filter:brightness(0) invert(1);" alt="Check"> CARGADO: ${atlasCharJsonFileName}`;
             }
-        } catch (err) { alert("Error: Character JSON inválido."); }
-    };
-    reader.readAsText(file);
+        },
+        onError: () => {
+            atlasCharJsonObj = null;
+        }
+    });
 });
 
-document.getElementById('atlasPngUpload')?.addEventListener('change', (e) => {
-    let file = e.target.files[0];
-    if (!file) return;
-    atlasPngFileName = file.name;
-    let reader = new FileReader();
-    reader.onload = function (event) {
-        atlasPngImg = new Image();
-        atlasPngImg.onload = updateAtlasPreview;
-        atlasPngImg.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
+document.getElementById('atlasPngUpload')?.addEventListener('change', async (e) => {
+    let inp = e.target;
+    if (!inp.files || inp.files.length === 0) {
+        if (typeof window.setImportButtonState === 'function') window.setImportButtonState(inp, 'reset');
+        return;
+    }
+
+    await window.validateAndProcessFile(inp, 'png', {
+        onSuccess: (file, img) => {
+            atlasPngFileName = file.name;
+            atlasPngImg = img;
+            updateAtlasPreview();
+        },
+        onError: () => {
+            atlasPngImg = null;
+        }
+    });
 });
 
 let atlasGlobalAnimations = [];

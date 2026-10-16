@@ -123,7 +123,7 @@ window.resolverModalJsonWarning = function (continuar) {
 };
 
 // =========================================================================
-// CÁLCULO MATEMÁTICO DE COMPENSACIÓN DE POSICIÓN Y ESCALA (PSYCH ENGINE)
+// CÁLCULO MATEMÁTICO DE COMPENSACIÓN DE POSICIÓN, CÁMARA Y ESCALA (PSYCH ENGINE)
 // =========================================================================
 function calcularAjustePsychJson(originalJson, resizeFactor) {
     if (!originalJson) return null;
@@ -134,6 +134,9 @@ function calcularAjustePsychJson(originalJson, resizeFactor) {
     let origPos = (Array.isArray(json.position) && json.position.length >= 2)
         ? [Number(json.position[0]) || 0, Number(json.position[1]) || 0]
         : [0, 0];
+    let origCamPos = (Array.isArray(json.camera_position) && json.camera_position.length >= 2)
+        ? [Number(json.camera_position[0]) || 0, Number(json.camera_position[1]) || 0]
+        : [0, 0];
 
     if (factor >= 1.0) {
         return {
@@ -142,8 +145,12 @@ function calcularAjustePsychJson(originalJson, resizeFactor) {
             newScale: origScale,
             origPos: origPos,
             newPos: origPos,
+            origCamPos: origCamPos,
+            newCamPos: origCamPos,
             deltaX: 0,
             deltaY: 0,
+            deltaCamX: 0,
+            deltaCamY: 0,
             refAnim: 'N/A',
             frameSize: [0, 0]
         };
@@ -205,8 +212,35 @@ function calcularAjustePsychJson(originalJson, resizeFactor) {
 
     let newPosX = origPos[0] + deltaX;
     let newPosY = origPos[1] + deltaY;
-
     json.position = [newPosX, newPosY];
+
+    // =========================================================================
+    // COMPENSACIÓN EXACTA DE LA CÁMARA (PSYCH ENGINE):
+    // En Psych Engine (CharacterEditorState.hx y PlayState.hx):
+    //   CamY = midpoint.y - 100 + cameraPosition[1]
+    // Como el midpoint.y se desplaza hacia abajo por +ΔY, el objetivo de la cámara
+    // queda demasiado abajo. Para devolver la cámara exactamente a su punto original:
+    //   ΔCamY = -ΔY
+    //
+    // Para el eje X:
+    //   Oponente: CamX = midpoint.x + 150 + cameraPosition[0]  -->  ΔCamX = -ΔX
+    //   Jugador (BF): CamX = midpoint.x - 100 - cameraPosition[0]  -->  ΔCamX = +ΔX
+    // =========================================================================
+    let isPlayer = false;
+    if (typeof json._editor_isPlayer === 'boolean') {
+        isPlayer = json._editor_isPlayer;
+    } else if (json.flip_x === true) {
+        isPlayer = true;
+    } else if (json.image && (json.image.toLowerCase().includes('bf') || json.image.toLowerCase().includes('player'))) {
+        isPlayer = true;
+    }
+
+    let deltaCamY = -deltaY;
+    let deltaCamX = isPlayer ? deltaX : -deltaX;
+
+    let newCamX = Math.round(origCamPos[0] + deltaCamX);
+    let newCamY = Math.round(origCamPos[1] + deltaCamY);
+    json.camera_position = [newCamX, newCamY];
 
     return {
         json: json,
@@ -214,8 +248,13 @@ function calcularAjustePsychJson(originalJson, resizeFactor) {
         newScale: newScale,
         origPos: origPos,
         newPos: [newPosX, newPosY],
+        origCamPos: origCamPos,
+        newCamPos: [newCamX, newCamY],
         deltaX: deltaX,
         deltaY: deltaY,
+        deltaCamX: deltaCamX,
+        deltaCamY: deltaCamY,
+        isPlayer: isPlayer,
         refAnim: refAnimObj ? refAnimObj.anim : (refSprite ? refSprite.name : 'default'),
         frameSize: [fwOrig, fhOrig]
     };
@@ -229,6 +268,7 @@ function actualizarBadgeJson(adj, fileName) {
     let animCount = (json.animations || []).length;
     let origScale = window.uploadedAnimationJSON.origScale;
     let origPos = window.uploadedAnimationJSON.origPosition;
+    let origCamPos = window.uploadedAnimationJSON.origCameraPosition || [0, 0];
     let name = fileName || window.uploadedAnimationJSON.name;
 
     lbl.style.display = 'block';
@@ -247,36 +287,45 @@ function actualizarBadgeJson(adj, fileName) {
                 <div style="font-size:0.85rem; color:var(--text); display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
                     <span>• <b>Escala:</b> ${origScale} <span style="color:#00e5ff;">➔</span> <b style="color:#00e5ff;">${adj.newScale}</b></span>
                     <span>• <b>Posición [X, Y]:</b> [${origPos[0]}, ${origPos[1]}] <span style="color:#00ff88;">➔</span> <b style="color:#00ff88;">[${adj.newPos[0]}, ${adj.newPos[1]}]</b></span>
-                    <span style="color:#aaa; font-size:0.78rem;">(Compensación: ΔX: +${adj.deltaX}, ΔY: +${adj.deltaY} | Base: "${adj.refAnim}")</span>
+                    <span>• <b>Cámara [X, Y]:</b> [${origCamPos[0]}, ${origCamPos[1]}] <span style="color:#ffcc00;">➔</span> <b style="color:#ffcc00;">[${adj.newCamPos[0]}, ${adj.newCamPos[1]}]</b></span>
+                </div>
+                <div style="color:#aaa; font-size:0.78rem;">
+                    (Compensación: ΔPos: [+${adj.deltaX}, +${adj.deltaY}] | ΔCámara: [${adj.deltaCamX >= 0 ? '+' : ''}${adj.deltaCamX}, ${adj.deltaCamY >= 0 ? '+' : ''}${adj.deltaCamY}] | Rol: ${adj.isPlayer ? 'Player' : 'Opponent'} | Base: "${adj.refAnim}")
                 </div>
             </div>
         `;
     } else {
         let posStr = `[${origPos[0]}, ${origPos[1]}]`;
+        let camStr = `[${origCamPos[0]}, ${origCamPos[1]}]`;
         lbl.innerHTML = `
             <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
                 <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" class="icon-sm" alt="OK">
                 <b style="color:var(--text);">${name}</b>
-                <span style="color:#aaa; font-size:0.8rem;">| Anims: ${animCount} | Escala: ${origScale} | Posición [X, Y]: ${posStr}</span>
+                <span style="color:#aaa; font-size:0.8rem;">| Anims: ${animCount} | Escala: ${origScale} | Pos: ${posStr} | Cámara: ${camStr}</span>
             </div>
         `;
     }
 }
 
 document.getElementById('jsonUpdateUpload')?.addEventListener('change', async (e) => {
-    let file = e.target.files[0];
-    if (!file) {
+    let inp = e.target;
+    if (!inp.files || inp.files.length === 0) {
         window.uploadedAnimationJSON = null;
         let lbl = document.getElementById('lblJsonUploaded');
         if (lbl) lbl.style.display = 'none';
+        if (typeof window.setImportButtonState === 'function') {
+            window.setImportButtonState(inp, 'reset');
+        }
+        let txt = document.getElementById('txtUploadJson');
+        if (txt) txt.textContent = "Subir Archivo .JSON";
         return;
     }
-    showLoader("OPTIMIZADOR", "Leyendo archivo .JSON del personaje...");
-    await pensar(350);
-    let reader = new FileReader();
-    reader.onload = async (ev) => {
-        try {
-            let json = JSON.parse(ev.target.result);
+
+    await window.validateAndProcessFile(inp, 'json', {
+        onSuccess: async (file, data) => {
+            showLoader("OPTIMIZADOR", "Procesando archivo .JSON del personaje...");
+            await pensar(250);
+            let json = data.obj;
             window.uploadedAnimationJSON = {
                 name: file.name,
                 rawObj: JSON.parse(JSON.stringify(json)),
@@ -284,13 +333,19 @@ document.getElementById('jsonUpdateUpload')?.addEventListener('change', async (e
                 origScale: typeof json.scale === 'number' ? json.scale : 1,
                 origPosition: (Array.isArray(json.position) && json.position.length >= 2)
                     ? [Number(json.position[0]) || 0, Number(json.position[1]) || 0]
+                    : [0, 0],
+                origCameraPosition: (Array.isArray(json.camera_position) && json.camera_position.length >= 2)
+                    ? [Number(json.camera_position[0]) || 0, Number(json.camera_position[1]) || 0]
                     : [0, 0]
             };
 
+            let txt = document.getElementById('txtUploadJson');
+            if (txt) txt.textContent = `✓ .JSON: ${file.name}`;
+
             let isOptimized = window.lastResizeFactor && window.lastResizeFactor < 1.0;
             if (isOptimized) {
-                showLoader("CALCULANDO MATEMÁTICAS", "Alineando posición y escala del personaje para Psych Engine...");
-                await pensar(500);
+                showLoader("CALCULANDO MATEMÁTICAS", "Alineando posición, cámara y escala del personaje para Psych Engine...");
+                await pensar(400);
                 let adj = calcularAjustePsychJson(window.uploadedAnimationJSON.rawObj, window.lastResizeFactor);
                 window.uploadedAnimationJSON.obj = adj.json;
                 actualizarBadgeJson(adj, file.name);
@@ -298,17 +353,18 @@ document.getElementById('jsonUpdateUpload')?.addEventListener('change', async (e
                 actualizarBadgeJson(null, file.name);
             }
 
-            await pensar(300);
+            await pensar(200);
             ocultarCargaGlobal();
-        } catch (err) {
-            ocultarCargaGlobal();
-            alert("❌ Archivo JSON inválido: " + err.message);
+        },
+        onError: (errType, msg) => {
             window.uploadedAnimationJSON = null;
             let lbl = document.getElementById('lblJsonUploaded');
             if (lbl) lbl.style.display = 'none';
+            let txt = document.getElementById('txtUploadJson');
+            if (txt) txt.textContent = "Subir Archivo .JSON";
+            ocultarCargaGlobal();
         }
-    };
-    reader.readAsText(file);
+    });
 });
 
 async function repackAndExport() {
@@ -543,14 +599,14 @@ async function aplicarResizeOptimizador() {
 
     let jsonAdjResult = null;
     if (window.uploadedAnimationJSON) {
-        showLoader("CALCULANDO MATEMÁTICAS", "Analizando centro HaxeFlixel y compensando posición del personaje...");
+        showLoader("CALCULANDO MATEMÁTICAS", "Analizando centro HaxeFlixel y compensando posición y cámara...");
         await pensar(500);
 
         jsonAdjResult = calcularAjustePsychJson(window.uploadedAnimationJSON.rawObj, window.totalResizeFactor);
         window.uploadedAnimationJSON.obj = jsonAdjResult.json;
         actualizarBadgeJson(jsonAdjResult);
 
-        showLoader("SINCRONIZANDO JSON", `Alineando posición: [${jsonAdjResult.origPos[0]}, ${jsonAdjResult.origPos[1]}] ➔ [${jsonAdjResult.newPos[0]}, ${jsonAdjResult.newPos[1]}] (Escala: ${jsonAdjResult.newScale})...`);
+        showLoader("SINCRONIZANDO JSON", `Alineando Pos: [${jsonAdjResult.origPos[0]}, ${jsonAdjResult.origPos[1]}] ➔ [${jsonAdjResult.newPos[0]}, ${jsonAdjResult.newPos[1]}] | Cámara: [${jsonAdjResult.origCamPos[0]}, ${jsonAdjResult.origCamPos[1]}] ➔ [${jsonAdjResult.newCamPos[0]}, ${jsonAdjResult.newCamPos[1]}]...`);
         await pensar(500);
     }
 
@@ -576,8 +632,9 @@ async function aplicarResizeOptimizador() {
             msg += `\n\n• JSON del personaje ajustado (Psych Engine):\n` +
                    `  - Nueva Escala: ${jsonAdjResult.newScale} (antes ${jsonAdjResult.origScale})\n` +
                    `  - Nueva Posición [X, Y]: [${jsonAdjResult.newPos[0]}, ${jsonAdjResult.newPos[1]}] (antes [${jsonAdjResult.origPos[0]}, ${jsonAdjResult.origPos[1]}])\n` +
-                   `  - Compensación calculada: ΔX: +${jsonAdjResult.deltaX}, ΔY: +${jsonAdjResult.deltaY} (Base: "${jsonAdjResult.refAnim}")\n\n` +
-                   `¡Tu personaje mantendrá exactamente su posición original en el escenario sin flotar ni desfasarse!`;
+                   `  - Nueva Cámara [X, Y]: [${jsonAdjResult.newCamPos[0]}, ${jsonAdjResult.newCamPos[1]}] (antes [${jsonAdjResult.origCamPos[0]}, ${jsonAdjResult.origCamPos[1]}])\n` +
+                   `  - Compensación calculada: ΔPos: [+${jsonAdjResult.deltaX}, +${jsonAdjResult.deltaY}] | ΔCámara: [${jsonAdjResult.deltaCamX >= 0 ? '+' : ''}${jsonAdjResult.deltaCamX}, ${jsonAdjResult.deltaCamY >= 0 ? '+' : ''}${jsonAdjResult.deltaCamY}] (Rol: ${jsonAdjResult.isPlayer ? 'Player' : 'Opponent'} | Base: "${jsonAdjResult.refAnim}")\n\n` +
+                   `¡Tu personaje y la cámara mantendrán exactamente su posición y enfoque idénticos al original en Psych Engine!`;
         }
 
         alert(msg);

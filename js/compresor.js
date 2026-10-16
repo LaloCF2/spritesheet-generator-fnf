@@ -5,22 +5,25 @@
 let compNombreArchivo = "sprite_optimizado.png";
 let compOriginalSize = 0;
 
-document.getElementById('imgCompresorUpload')?.addEventListener('change', (e) => {
-    let file = e.target.files[0];
-    if (!file) return;
+document.getElementById('imgCompresorUpload')?.addEventListener('change', async (e) => {
+    let inp = e.target;
+    if (!inp.files || inp.files.length === 0) {
+        if (typeof window.setImportButtonState === 'function') {
+            window.setImportButtonState(inp, 'reset');
+        }
+        return;
+    }
 
-    compNombreArchivo = file.name;
-    compOriginalSize = file.size;
+    showLoader("CARGANDO...", "Validando imagen .PNG...");
 
-    showLoader("CARGANDO...", "Leyendo imagen...");
+    await window.validateAndProcessFile(inp, 'png', {
+        onSuccess: (file, img) => {
+            compNombreArchivo = file.name;
+            compOriginalSize = file.size;
 
-    let reader = new FileReader();
-    reader.onload = (ev) => {
-        let img = new Image();
-        img.onload = () => {
             let cvs = document.getElementById('canvasCompresorPreview');
-            cvs.width = img.width;
-            cvs.height = img.height;
+            cvs.width = img.naturalWidth || img.width;
+            cvs.height = img.naturalHeight || img.height;
             let cCtx = cvs.getContext('2d');
             cCtx.drawImage(img, 0, 0);
 
@@ -31,10 +34,12 @@ document.getElementById('imgCompresorUpload')?.addEventListener('change', (e) =>
             document.getElementById('btnRunCompressor').style.display = 'block';
 
             ocultarCargaGlobal();
-        };
-        img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
+        },
+        onError: () => {
+            document.getElementById('btnRunCompressor').style.display = 'none';
+            ocultarCargaGlobal();
+        }
+    });
 });
 
 async function ejecutarCompresion() {

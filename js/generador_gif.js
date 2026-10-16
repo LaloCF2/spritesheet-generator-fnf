@@ -50,22 +50,28 @@ let tempPngFile = null;
 // MODO C: XML + PNG
 // =======================
 document.getElementById('gifXmlUpload')?.addEventListener('change', async (e) => {
-    let files = Array.from(e.target.files);
-    if(files.length > 0) {
-        tempXmlFile = files[0];
-        e.target.nextElementSibling.style.background = '#4caf50';
-        e.target.nextElementSibling.style.color = '#fff';
-    }
-    checkModoC();
+    let inp = e.target;
+    await window.validateAndProcessFile(inp, 'xml', {
+        onSuccess: (file, data) => {
+            tempXmlFile = file;
+            checkModoC();
+        },
+        onError: () => {
+            tempXmlFile = null;
+        }
+    });
 });
 document.getElementById('gifPngUpload')?.addEventListener('change', async (e) => {
-    let files = Array.from(e.target.files);
-    if(files.length > 0) {
-        tempPngFile = files[0];
-        e.target.nextElementSibling.style.background = '#4caf50';
-        e.target.nextElementSibling.style.color = '#fff';
-    }
-    checkModoC();
+    let inp = e.target;
+    await window.validateAndProcessFile(inp, 'png', {
+        onSuccess: (file, img) => {
+            tempPngFile = file;
+            checkModoC();
+        },
+        onError: () => {
+            tempPngFile = null;
+        }
+    });
 });
 
 async function checkModoC() {
@@ -89,26 +95,48 @@ async function checkModoC() {
 // MODO B: Solo PNG
 // =======================
 document.getElementById('gifPngUnicoUpload')?.addEventListener('change', async (e) => {
-    let files = Array.from(e.target.files);
-    if(files.length > 0) {
-        mostrarCargaGlobal("Procesando spritesheet...");
-        imgSpritesheet = await fileToImage(files[0]);
-        iniciarModoB();
-        ocultarCargaGlobal();
-    }
+    let inp = e.target;
+    await window.validateAndProcessFile(inp, 'png', {
+        onSuccess: async (file, img) => {
+            mostrarCargaGlobal("Procesando spritesheet...");
+            imgSpritesheet = img;
+            iniciarModoB();
+            ocultarCargaGlobal();
+        }
+    });
 });
 
 // =======================
 // MODO A: Sueltas
 // =======================
 document.getElementById('gifSueltasUpload')?.addEventListener('change', async (e) => {
-    let files = Array.from(e.target.files);
-    if(files.length > 0) {
-        mostrarCargaGlobal("Procesando imágenes...");
-        archivosSueltos = files.filter(f => f.type.startsWith('image/') || f.name.toLowerCase().endsWith('.png') || f.name.toLowerCase().endsWith('.jpg'));
-        iniciarModoA();
-        ocultarCargaGlobal();
+    let inp = e.target;
+    let files = Array.from(inp.files || []);
+    let btn = window.findTargetButton(inp);
+    if (files.length === 0) {
+        window.setImportButtonState(btn, 'reset');
+        return;
     }
+
+    let nonImages = files.filter(f => !/\.(png|jpg|jpeg|webp)$/i.test(f.name));
+    if (nonImages.length === files.length) {
+        window.setImportButtonState(btn, 'error');
+        window.mostrarLogImportacion({
+            tipo: 'formato_incorrecto',
+            titulo: 'ARCHIVOS INCORRECTOS',
+            esperado: 'Imágenes (.PNG, .JPG)',
+            archivo: files[0],
+            detalle: `[FORMATO INCORRECTO]: Ninguno de los ${files.length} archivos seleccionados corresponde a una imagen válida.`
+        });
+        inp.value = "";
+        return;
+    }
+
+    window.setImportButtonState(btn, 'success');
+    mostrarCargaGlobal("Procesando imágenes...");
+    archivosSueltos = files.filter(f => /\.(png|jpg|jpeg|webp)$/i.test(f.name) || f.type.startsWith('image/'));
+    iniciarModoA();
+    ocultarCargaGlobal();
 });
 
 function fileToImage(file) {

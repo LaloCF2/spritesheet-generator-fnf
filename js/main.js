@@ -1,11 +1,29 @@
 // ==========================================
 // NÚCLEO GLOBAL, VARIABLES Y FUNCIONES
 // ==========================================
-const CURRENT_VERSION = '1.5.1';
+const CURRENT_VERSION = '1.5.2';
 
 window.showChangelog = function (onlyLatest = false) {
     let modChangelog = document.getElementById('changelogModal');
-    if (!modChangelog) return;
+    if (!modChangelog) {
+        modChangelog = document.createElement('div');
+        modChangelog.className = 'overlay-modal';
+        modChangelog.id = 'changelogModal';
+        modChangelog.style.display = 'none';
+        modChangelog.innerHTML = `<div class="modal-box modal-box-changelog"></div>`;
+        document.body.appendChild(modChangelog);
+    }
+
+    modChangelog.onclick = function (e) {
+        if (e.target === modChangelog) {
+            window.closeChangelogModal();
+        }
+    };
+
+    let box = modChangelog.querySelector('.modal-box');
+    if (box && !box.classList.contains('modal-box-changelog')) {
+        box.classList.add('modal-box-changelog');
+    }
 
     if (typeof CHANGELOG_DATA === 'undefined') {
         let script = document.createElement('script');
@@ -16,23 +34,32 @@ window.showChangelog = function (onlyLatest = false) {
     }
 
     // Generador de HTML dinámico basado en CHANGELOG_DATA
-    let html = `<h2 class="modal-title" style="color: var(--accent-gold);"><img src="https://cdn-icons-png.flaticon.com/128/3067/3067425.png" style="width:30px; filter:invert(1);"> Historial de Versiones</h2>
-                <div class="modal-body" style="text-align: left; max-height: 60vh; overflow-y: auto; padding-right: 10px;">`;
+    let html = `
+        <div style="display:flex; justify-content:space-between; align-items:center; width:100%; border-bottom:1px solid rgba(255,215,0,0.25); padding-bottom:10px; margin-bottom:12px; flex-shrink:0;">
+            <h2 class="modal-title" style="color: var(--accent-gold); margin:0; font-size: clamp(1.15rem, 3.5vw, 1.45rem); display:flex; align-items:center; gap:10px;">
+                <img src="https://cdn-icons-png.flaticon.com/128/3067/3067425.png" style="width:28px; height:28px; filter:invert(1);" alt="Changelog"> 
+                Historial de Versiones
+            </h2>
+            <button onclick="closeChangelogModal()" style="background:none; border:none; color:#aaa; font-size:1.8rem; cursor:pointer; line-height:1; padding:0 4px; transition:0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#aaa'" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body" style="text-align: left; flex:1 1 auto; overflow-y: auto; padding-right: 6px; margin-bottom: 12px; overscroll-behavior: contain;">`;
 
     let dataToShow = onlyLatest ? [CHANGELOG_DATA[0]] : CHANGELOG_DATA;
 
     dataToShow.forEach((log, index) => {
         let isLatest = (log.version === CURRENT_VERSION);
-        let borderColor = isLatest ? 'var(--accent-gold)' : 'rgba(255,255,255,0.1)';
-        let titleColor = isLatest ? 'var(--accent-gold)' : '#ddd';
-        let extraTag = log.date ? `<span style="font-size:0.7rem; background:#333; padding:2px 6px; border-radius:4px; margin-left:10px; vertical-align:middle;">${log.date}</span>` : '';
+        let borderColor = isLatest ? 'var(--accent-gold)' : 'rgba(255,255,255,0.12)';
+        let titleColor = isLatest ? 'var(--accent-gold)' : '#e0e0e0';
+        let extraTag = log.date ? `<span style="font-size:0.75rem; background:rgba(255,255,255,0.1); color:#bbb; padding:2px 8px; border-radius:4px; margin-left:8px; vertical-align:middle; font-weight:normal;">${log.date}</span>` : '';
 
-        html += `<div style="border: 1px solid ${borderColor}; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.3);">
-                    <h3 style="color: ${titleColor}; margin-top: 0; margin-bottom: 10px; font-size: 1.2rem; display:flex; align-items:center;">Versión ${log.version} ${isLatest ? '✨' : ''} ${extraTag}</h3>
-                    <ul class="modal-list" style="margin: 0;">`;
+        html += `<div style="border: 1px solid ${borderColor}; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; background: rgba(0,0,0,0.35); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                    <h3 style="color: ${titleColor}; margin-top: 0; margin-bottom: 10px; font-size: clamp(0.95rem, 2.5vw, 1.15rem); display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
+                        Versión ${log.version} ${isLatest ? '✨ <span style="font-size:0.7rem; background:var(--accent-gold); color:#000; font-weight:bold; padding:2px 6px; border-radius:10px;">Actual</span>' : ''} ${extraTag}
+                    </h3>
+                    <ul class="modal-list" style="margin: 0; display:flex; flex-direction:column; gap:8px;">`;
 
         log.changes.forEach(change => {
-            html += `<li style="margin-bottom: 8px; line-height: 1.4;">${change}</li>`;
+            html += `<li style="margin: 0; line-height: 1.45; font-size: clamp(0.82rem, 2vw, 0.92rem); padding: 8px 10px; border-radius: 8px;">${change}</li>`;
         });
 
         html += `   </ul>
@@ -40,9 +67,11 @@ window.showChangelog = function (onlyLatest = false) {
     });
 
     html += `</div>
-             <button class="btn-pildora btn-modal-action" style="background: linear-gradient(135deg, #b38f00, #665200); border-color: var(--accent-gold); margin-top: 15px;" onclick="closeChangelogModal()">¡Entendido!</button>`;
+             <button class="btn-pildora btn-modal-action" style="flex-shrink:0; background: linear-gradient(135deg, #b38f00, #665200); border-color: var(--accent-gold); margin-top: auto; padding: 12px 18px; font-weight:bold; font-size:clamp(0.92rem, 2.4vw, 1rem); box-shadow: 0 4px 15px rgba(179,143,0,0.4);" onclick="closeChangelogModal()">¡Entendido!</button>`;
 
-    modChangelog.querySelector('.modal-box').innerHTML = html;
+    if (box) {
+        box.innerHTML = html;
+    }
     modChangelog.style.display = 'flex';
 };
 
@@ -119,7 +148,7 @@ function mostrarCargaGlobal(mensaje) {
     let gl = document.getElementById('globalLoader');
     let gt = document.getElementById('globalLoaderText');
     if (gl) {
-        if (gt) gt.innerText = mensaje || "Cargando...";
+        if (gt) gt.innerHTML = mensaje || "Cargando...";
         gl.classList.remove('hidden');
     }
 }
@@ -173,7 +202,455 @@ window.onclick = function (event) {
             dropdown.classList.remove('active');
         }
     }
-}
+};
+
+// ==========================================
+// SISTEMA GLOBAL DE LOGS Y VALIDACIÓN DE IMPORTACIÓN
+// ==========================================
+
+window.initImportLogModal = function () {
+    if (document.getElementById('modalLogImportacion')) return;
+
+    const modalHTML = `
+    <!-- MODAL DE LOGS DE IMPORTACIÓN -->
+    <div class="overlay-modal" id="modalLogImportacion" style="display: none; z-index: 100000;">
+        <div class="modal-box modal-box-log" id="boxLogImportacion">
+            <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 14px;">
+                <div id="iconLogImportacion" style="font-size: 2.2rem; line-height: 1;">❌</div>
+                <div style="flex: 1;">
+                    <h3 id="titleLogImportacion" style="margin: 0; color: #ff3366; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.5px;">ARCHIVO INCORRECTO</h3>
+                    <span id="badgeLogImportacion" style="display: inline-block; margin-top: 4px; font-size: 0.72rem; background: rgba(255,51,102,0.2); color: #ff3366; border: 1px solid rgba(255,51,102,0.4); padding: 2px 8px; border-radius: 6px; font-weight: bold; text-transform: uppercase;">FORMATO INVÁLIDO</span>
+                </div>
+                <button onclick="cerrarLogImportacion()" style="background: transparent; border: none; color: #aaa; font-size: 1.6rem; cursor: pointer; padding: 0 6px; line-height: 1;" title="Cerrar">&times;</button>
+            </div>
+
+            <div id="msgLogImportacion" style="color: #eee; font-size: 0.95rem; line-height: 1.5; margin-bottom: 16px;">
+                El archivo importado no es el correcto.
+            </div>
+
+            <div id="wrapperDetalleLog" style="display: none; margin-bottom: 18px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 0.75rem; font-weight: bold; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px;">📋 Registro de Error Técnico (Log):</span>
+                    <button id="btnCopiarLogImportacion" onclick="copiarDetalleLogImportacion()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc; font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; transition: 0.2s;">Copiar Log</button>
+                </div>
+                <pre id="detalleLogImportacion" style="background: rgba(0, 0, 0, 0.75); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 12px; color: #ff8099; font-family: 'Consolas', 'Courier New', monospace; font-size: 0.82rem; line-height: 1.45; max-height: 150px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; margin: 0;"></pre>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn-pildora" id="btnOkLogImportacion" onclick="cerrarLogImportacion()" style="background: linear-gradient(135deg, #ff3366, #c2185b); border: none; padding: 10px 24px; color: white; font-weight: bold; cursor: pointer; border-radius: 50px;">¡Entendido!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST FLOTANTE -->
+    <div id="toastLogImportacion" class="toast-import-feedback"></div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+};
+
+window.cerrarLogImportacion = function () {
+    let mod = document.getElementById('modalLogImportacion');
+    if (mod) mod.style.display = 'none';
+};
+
+window.copiarDetalleLogImportacion = function () {
+    let pre = document.getElementById('detalleLogImportacion');
+    let btn = document.getElementById('btnCopiarLogImportacion');
+    if (pre && pre.textContent) {
+        navigator.clipboard.writeText(pre.textContent).then(() => {
+            if (btn) {
+                let orig = btn.textContent;
+                btn.textContent = "✓ ¡Copiado!";
+                btn.style.color = "#4caf50";
+                setTimeout(() => { btn.textContent = orig; btn.style.color = "#ccc"; }, 2000);
+            }
+        }).catch(err => {
+            console.error("No se pudo copiar al portapapeles:", err);
+        });
+    }
+};
+
+window.mostrarToastImportacion = function (mensaje, tipo = 'info', duracion = 4000) {
+    window.initImportLogModal();
+    let toast = document.getElementById('toastLogImportacion');
+    if (!toast) return;
+
+    toast.className = 'toast-import-feedback';
+    if (tipo === 'error') {
+        toast.classList.add('toast-error');
+        toast.innerHTML = `<span style="font-size:1.1rem;">❌</span> <span>${mensaje}</span>`;
+    } else if (tipo === 'warning') {
+        toast.classList.add('toast-warning');
+        toast.innerHTML = `<span style="font-size:1.1rem;">⚠️</span> <span>${mensaje}</span>`;
+    } else {
+        toast.classList.add('toast-success');
+        toast.innerHTML = `<span style="font-size:1.1rem;">✅</span> <span>${mensaje}</span>`;
+    }
+
+    toast.classList.add('show');
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+    }, duracion);
+};
+
+window.mostrarLogImportacion = function (opts = {}) {
+    window.initImportLogModal();
+    let { tipo, titulo, mensaje, detalle, archivo, esperado } = opts;
+
+    let mod = document.getElementById('modalLogImportacion');
+    let box = document.getElementById('boxLogImportacion');
+    let icon = document.getElementById('iconLogImportacion');
+    let tit = document.getElementById('titleLogImportacion');
+    let badge = document.getElementById('badgeLogImportacion');
+    let msg = document.getElementById('msgLogImportacion');
+    let wrapDetalle = document.getElementById('wrapperDetalleLog');
+    let preDetalle = document.getElementById('detalleLogImportacion');
+    let btnOk = document.getElementById('btnOkLogImportacion');
+
+    if (!mod || !box) return;
+
+    box.className = 'modal-box modal-box-log';
+
+    let fName = archivo ? archivo.name : "archivo desconocido";
+    let fExt = fName.includes('.') ? fName.split('.').pop().toLowerCase() : "sin extensión";
+    let fSize = archivo ? (archivo.size / 1024).toFixed(1) + " KB" : "--";
+
+    if (tipo === 'formato_incorrecto') {
+        box.classList.remove('log-corrupto', 'log-exito');
+        icon.textContent = "❌";
+        tit.textContent = titulo || "ARCHIVO INCORRECTO";
+        tit.style.color = "#ff3366";
+        badge.textContent = "FORMATO NO COINCIDE";
+        badge.style.background = "rgba(255,51,102,0.2)";
+        badge.style.color = "#ff3366";
+        badge.style.borderColor = "rgba(255,51,102,0.4)";
+
+        msg.innerHTML = mensaje || `
+            El archivo importado <b style="color:#ff8099;">"${fName}"</b> no es el correcto.<br><br>
+            Se esperaba un archivo con formato <b>${esperado || 'específico'}</b>, pero el archivo seleccionado tiene extensión <b>.${fExt}</b>.<br><br>
+            <span style="color:#aaa; font-size:0.85rem;">Por favor, revisa tus archivos y selecciona el que corresponde a esta opción.</span>
+        `;
+
+        wrapDetalle.style.display = 'block';
+        preDetalle.style.color = "#ff8099";
+        preDetalle.textContent = detalle || `[LOG DE ERROR]: Formato esperado "${esperado}". Archivo recibido: "${fName}" (tipo detectado: ${archivo && archivo.type ? archivo.type : 'desconocido'}, tamaño: ${fSize}).`;
+
+        btnOk.style.background = "linear-gradient(135deg, #ff3366, #c2185b)";
+        console.error(`❌ [LOG IMPORTACIÓN - ARCHIVO INCORRECTO]: Se esperaba "${esperado}", recibido "${fName}"`);
+        window.mostrarToastImportacion(`Archivo incorrecto: Se esperaba ${esperado || 'otro formato'}`, 'error');
+
+    } else if (tipo === 'sintaxis_corrupto') {
+        box.classList.add('log-corrupto');
+        box.classList.remove('log-exito');
+        icon.textContent = "⚠️";
+        tit.textContent = titulo || "ARCHIVO CON ERRORES Y FALLAS";
+        tit.style.color = "#ffaa00";
+        badge.textContent = "SINTAXIS INVÁLIDA O CORRUPTO";
+        badge.style.background = "rgba(255,152,0,0.2)";
+        badge.style.color = "#ffaa00";
+        badge.style.borderColor = "rgba(255,152,0,0.4)";
+
+        msg.innerHTML = mensaje || `
+            Este archivo cuenta con <b style="color:#ffcc00;">errores y fallas</b>.<br><br>
+            El archivo <b style="color:#ffcc00;">"${fName}"</b> tiene la extensión esperada (<b>${esperado || '.' + fExt}</b>), pero contiene fallas de sintaxis, estructura interna rota o está dañado/corrupto y no puede ser procesado.<br><br>
+            <span style="color:#aaa; font-size:0.85rem;">Revisa el registro de error a continuación para identificar la falla:</span>
+        `;
+
+        wrapDetalle.style.display = 'block';
+        preDetalle.style.color = "#ffcc00";
+        preDetalle.textContent = detalle || `[LOG DE ERROR - FALLA TÉCNICA]: El archivo "${fName}" no se pudo leer o decodificar debido a una falla interna de estructura o corrupción de datos.`;
+
+        btnOk.style.background = "linear-gradient(135deg, #ff9800, #e65100)";
+        console.error(`⚠️ [LOG IMPORTACIÓN - SINTAXIS/CORRUPCIÓN]: Error en "${fName}":\n`, detalle);
+        window.mostrarToastImportacion(`Archivo con errores y fallas: ${fName}`, 'warning');
+
+    } else if (tipo === 'exito') {
+        console.log(`✓ [LOG IMPORTACIÓN - ÉXITO]: "${fName}" importado correctamente.`);
+        window.mostrarToastImportacion(`¡Archivo "${fName}" importado con éxito!`, 'success');
+        return;
+    }
+
+    mod.style.display = 'flex';
+};
+
+window.findTargetButton = function (inputElem) {
+    if (!inputElem) return null;
+    if (inputElem.tagName === 'BUTTON') return inputElem;
+    if (inputElem.nextElementSibling && (inputElem.nextElementSibling.tagName === 'BUTTON' || inputElem.nextElementSibling.classList.contains('btn-pildora'))) {
+        return inputElem.nextElementSibling;
+    }
+    if (inputElem.id) {
+        let btn = document.querySelector(`button[onclick*="${inputElem.id}"]`);
+        if (btn) return btn;
+        let lbl = document.querySelector(`label[for="${inputElem.id}"]`);
+        if (lbl) return lbl;
+    }
+    return inputElem;
+};
+
+window.setImportButtonState = function (targetElem, state, details = {}) {
+    let btn = window.findTargetButton(targetElem);
+    if (!btn) return;
+
+    if (!btn.dataset.origStyle) {
+        btn.dataset.origStyle = btn.getAttribute('style') || '';
+    }
+
+    if (state === 'success') {
+        btn.classList.remove('btn-import-error', 'btn-shake');
+        btn.classList.add('btn-import-success');
+        btn.style.background = '#4caf50';
+        btn.style.backgroundImage = 'linear-gradient(135deg, #4caf50, #2e7d32)';
+        btn.style.color = '#ffffff';
+        btn.style.borderColor = '#4caf50';
+        btn.style.boxShadow = '0 4px 15px rgba(76, 175, 80, 0.45)';
+
+        let icons = btn.querySelectorAll('img.icon, img.icon-sm');
+        icons.forEach(ic => {
+            ic.style.filter = 'brightness(0) invert(1)';
+        });
+
+    } else if (state === 'error') {
+        btn.classList.remove('btn-import-success');
+        btn.classList.add('btn-import-error');
+        btn.style.background = '#e91e63';
+        btn.style.backgroundImage = 'linear-gradient(135deg, #ff3366, #c2185b)';
+        btn.style.color = '#ffffff';
+        btn.style.borderColor = '#ff3366';
+        btn.style.boxShadow = '0 4px 15px rgba(255, 51, 102, 0.55)';
+
+        btn.classList.remove('btn-shake');
+        void btn.offsetWidth;
+        btn.classList.add('btn-shake');
+
+        let icons = btn.querySelectorAll('img.icon, img.icon-sm');
+        icons.forEach(ic => {
+            ic.style.filter = 'brightness(0) invert(1)';
+        });
+
+    } else if (state === 'reset') {
+        btn.classList.remove('btn-import-success', 'btn-import-error', 'btn-shake');
+        if (btn.dataset.origStyle !== undefined) {
+            btn.setAttribute('style', btn.dataset.origStyle);
+        }
+    }
+};
+
+window.validateAndProcessFile = async function (inputElem, expectedType, callbacks = {}) {
+    let file = inputElem.files ? inputElem.files[0] : null;
+    if (!file) {
+        window.setImportButtonState(inputElem, 'reset');
+        return false;
+    }
+
+    let btn = window.findTargetButton(inputElem);
+    let fileName = file.name || "";
+    let ext = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : "";
+
+    // 1. VALIDACIÓN DE FORMATO / EXTENSIÓN
+    let isCorrectFormat = false;
+    let expectedDesc = "";
+
+    if (expectedType === 'png') {
+        expectedDesc = ".PNG (Imagen)";
+        isCorrectFormat = (ext === 'png');
+    } else if (expectedType === 'image') {
+        expectedDesc = "Imagen (.PNG, .JPG, .WEBP)";
+        isCorrectFormat = ['png', 'jpg', 'jpeg', 'webp'].includes(ext);
+    } else if (expectedType === 'xml') {
+        expectedDesc = ".XML (Sparrow)";
+        isCorrectFormat = (ext === 'xml');
+    } else if (expectedType === 'json') {
+        expectedDesc = ".JSON (Datos / Personaje)";
+        isCorrectFormat = (ext === 'json');
+    } else if (expectedType === 'audio') {
+        expectedDesc = ".OGG o .MP3 (Audio)";
+        isCorrectFormat = ['ogg', 'mp3', 'wav'].includes(ext);
+    }
+
+    if (!isCorrectFormat) {
+        window.setImportButtonState(btn, 'error');
+        window.mostrarLogImportacion({
+            tipo: 'formato_incorrecto',
+            titulo: 'ARCHIVO INCORRECTO',
+            esperado: expectedDesc,
+            archivo: file,
+            detalle: `[FORMATO INCORRECTO]: Se esperaba un archivo con formato "${expectedDesc}", pero se seleccionó "${fileName}" (extensión detectada: .${ext || 'desconocida'}).`
+        });
+        inputElem.value = "";
+        if (callbacks.onError) callbacks.onError('formato_incorrecto', `Extensión .${ext} no esperada`);
+        return false;
+    }
+
+    // 2. VALIDACIÓN DE ARCHIVO VACÍO (0 BYTES)
+    if (file.size === 0) {
+        window.setImportButtonState(btn, 'error');
+        window.mostrarLogImportacion({
+            tipo: 'sintaxis_corrupto',
+            titulo: 'ARCHIVO VACÍO O CORRUPTO',
+            esperado: expectedDesc,
+            archivo: file,
+            detalle: `[ARCHIVO VACÍO]: El archivo "${fileName}" tiene un tamaño de 0 bytes y no contiene información utilizable.`
+        });
+        inputElem.value = "";
+        if (callbacks.onError) callbacks.onError('sintaxis_corrupto', 'Archivo de 0 bytes');
+        return false;
+    }
+
+    // 3. VALIDACIÓN DE SINTAXIS / CORRUPCIÓN SEGÚN TIPO
+    if (expectedType === 'png' || expectedType === 'image') {
+        try {
+            let img = await new Promise((resolve, reject) => {
+                let tempImg = new Image();
+                let url = URL.createObjectURL(file);
+                tempImg.onload = () => {
+                    URL.revokeObjectURL(url);
+                    if (tempImg.naturalWidth === 0 || tempImg.naturalHeight === 0) {
+                        reject(new Error("La imagen tiene dimensiones de 0x0 píxeles."));
+                    } else {
+                        resolve(tempImg);
+                    }
+                };
+                tempImg.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error("Falla al decodificar la imagen: Los datos del archivo no corresponden a una imagen gráfica válida o están corruptos/dañados."));
+                };
+                tempImg.src = url;
+            });
+
+            window.setImportButtonState(btn, 'success', { fileName: fileName });
+            window.mostrarLogImportacion({ tipo: 'exito', archivo: file });
+            if (callbacks.onSuccess) callbacks.onSuccess(file, img);
+            return true;
+        } catch (err) {
+            window.setImportButtonState(btn, 'error');
+            window.mostrarLogImportacion({
+                tipo: 'sintaxis_corrupto',
+                titulo: 'ARCHIVO DE IMAGEN CORRUPTO',
+                esperado: expectedDesc,
+                archivo: file,
+                detalle: `[DECODE ERROR]: ${err.message}`
+            });
+            inputElem.value = "";
+            if (callbacks.onError) callbacks.onError('sintaxis_corrupto', err.message);
+            return false;
+        }
+
+    } else if (expectedType === 'xml') {
+        try {
+            let text = await file.text();
+            if (!text || !text.trim()) {
+                throw new Error("El archivo XML está completamente vacío o sin texto legible.");
+            }
+            let parser = new DOMParser();
+            let xmlDoc = parser.parseFromString(text, "text/xml");
+            let parseErrors = xmlDoc.getElementsByTagName("parsererror");
+            if (parseErrors.length > 0) {
+                let errText = parseErrors[0].textContent.trim();
+                throw new Error(`Error de sintaxis XML (DOMParser):\n${errText}`);
+            }
+
+            let subTextures = xmlDoc.getElementsByTagName("SubTexture");
+            let textureAtlas = xmlDoc.getElementsByTagName("TextureAtlas");
+            if (subTextures.length === 0 && textureAtlas.length === 0) {
+                throw new Error("El archivo XML tiene sintaxis válida, pero no cuenta con etiquetas <TextureAtlas> ni <SubTexture> necesarias para hojas de sprites de Friday Night Funkin'.");
+            }
+
+            window.setImportButtonState(btn, 'success', { fileName: fileName });
+            window.mostrarLogImportacion({ tipo: 'exito', archivo: file });
+            if (callbacks.onSuccess) callbacks.onSuccess(file, { text: text, xmlDoc: xmlDoc, subTextures: subTextures });
+            return true;
+        } catch (err) {
+            window.setImportButtonState(btn, 'error');
+            window.mostrarLogImportacion({
+                tipo: 'sintaxis_corrupto',
+                titulo: 'ARCHIVO XML CON ERRORES Y FALLAS',
+                esperado: expectedDesc,
+                archivo: file,
+                detalle: `[XML PARSER ERROR]: ${err.message}`
+            });
+            inputElem.value = "";
+            if (callbacks.onError) callbacks.onError('sintaxis_corrupto', err.message);
+            return false;
+        }
+
+    } else if (expectedType === 'json') {
+        try {
+            let text = await file.text();
+            if (!text || !text.trim()) {
+                throw new Error("El archivo JSON está completamente vacío.");
+            }
+            let jsonObj;
+            try {
+                jsonObj = JSON.parse(text);
+            } catch (syntaxErr) {
+                throw new Error(`Error de sintaxis JSON (JSON.parse):\n${syntaxErr.message}`);
+            }
+
+            if (!jsonObj || typeof jsonObj !== 'object') {
+                throw new Error("El contenido del archivo no es un objeto ni arreglo JSON válido.");
+            }
+
+            if (callbacks.customValidate) {
+                let customRes = callbacks.customValidate(jsonObj);
+                if (customRes && customRes.error) {
+                    throw new Error(customRes.error);
+                }
+            }
+
+            window.setImportButtonState(btn, 'success', { fileName: fileName });
+            window.mostrarLogImportacion({ tipo: 'exito', archivo: file });
+            if (callbacks.onSuccess) callbacks.onSuccess(file, { text: text, obj: jsonObj });
+            return true;
+        } catch (err) {
+            window.setImportButtonState(btn, 'error');
+            window.mostrarLogImportacion({
+                tipo: 'sintaxis_corrupto',
+                titulo: 'ARCHIVO JSON CON ERRORES Y FALLAS',
+                esperado: expectedDesc,
+                archivo: file,
+                detalle: `[JSON SYNTAX ERROR]: ${err.message}`
+            });
+            inputElem.value = "";
+            if (callbacks.onError) callbacks.onError('sintaxis_corrupto', err.message);
+            return false;
+        }
+
+    } else if (expectedType === 'audio') {
+        try {
+            let arrayBuffer = await file.arrayBuffer();
+            let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            let audioBuffer = await new Promise((resolve, reject) => {
+                audioCtx.decodeAudioData(arrayBuffer, resolve, (err) => {
+                    reject(new Error("No se pudo decodificar el audio. El códec no es compatible o el flujo de datos está corrupto."));
+                });
+            });
+
+            window.setImportButtonState(btn, 'success', { fileName: fileName });
+            window.mostrarLogImportacion({ tipo: 'exito', archivo: file });
+            if (callbacks.onSuccess) callbacks.onSuccess(file, audioBuffer);
+            return true;
+        } catch (err) {
+            window.setImportButtonState(btn, 'error');
+            window.mostrarLogImportacion({
+                tipo: 'sintaxis_corrupto',
+                titulo: 'ARCHIVO DE AUDIO CON ERRORES Y FALLAS',
+                esperado: expectedDesc,
+                archivo: file,
+                detalle: `[AUDIO DECODE ERROR]: ${err.message}`
+            });
+            inputElem.value = "";
+            if (callbacks.onError) callbacks.onError('sintaxis_corrupto', err.message);
+            return false;
+        }
+    }
+};
+
+window.addEventListener('DOMContentLoaded', () => {
+    window.initImportLogModal();
+});
 
 var appMode = 'HOME'; var imgOriginal = new Image(); var nombreArchivo = "spritesheet.png";
 var spritesDetectados = []; var psychAnimations = []; var indexEditando = null;
@@ -287,7 +764,12 @@ function initMode(mode) {
 }
 const pensar = (ms) => new Promise(res => setTimeout(res, ms));
 function showLoader(titulo, mensaje) {
-    mostrarCargaGlobal(titulo + " - " + mensaje);
+    if (!mensaje) {
+        mostrarCargaGlobal(titulo || "Cargando...");
+        return;
+    }
+    let html = `<div style="font-size: 1.15rem; font-weight: 800; color: #00e5ff; margin-bottom: 6px; letter-spacing: 0.5px; text-shadow: 0 0 10px rgba(0,229,255,0.4);">${titulo}</div><div style="font-size: 0.92rem; color: #eee; line-height: 1.45;">${mensaje}</div>`;
+    mostrarCargaGlobal(html);
 }
 
 function loadMainImage(file, callback) {
@@ -325,13 +807,66 @@ function loadMainImage(file, callback) {
     reader.readAsDataURL(file);
 }
 
-document.getElementById('imageInputScan')?.addEventListener('change', (e) => { loadMainImage(e.target.files[0], () => { let btn = document.getElementById('btnProcesar'); if (btn) btn.style.display = 'flex'; }); });
+document.getElementById('imageInputScan')?.addEventListener('change', async (e) => {
+    await window.validateAndProcessFile(e.target, 'png', {
+        onSuccess: (file, img) => {
+            loadMainImage(file, () => {
+                let btn = document.getElementById('btnProcesar');
+                if (btn) btn.style.display = 'flex';
+            });
+        }
+    });
+});
 
 let tI2 = null, tX2 = null, tI3 = null, tX3 = null;
-document.getElementById('modImage')?.addEventListener('change', e => { tI2 = e.target.files[0]; checkDual('EDIT'); });
-document.getElementById('modXML')?.addEventListener('change', e => { tX2 = e.target.files[0]; checkDual('EDIT'); });
-document.getElementById('psychImage')?.addEventListener('change', e => { tI3 = e.target.files[0]; checkDual('PSYCH'); });
-document.getElementById('psychXML')?.addEventListener('change', e => { tX3 = e.target.files[0]; checkDual('PSYCH'); });
+
+document.getElementById('modImage')?.addEventListener('change', async (e) => {
+    await window.validateAndProcessFile(e.target, 'png', {
+        onSuccess: (file, img) => {
+            tI2 = file;
+            checkDual('EDIT');
+        },
+        onError: () => {
+            tI2 = null;
+        }
+    });
+});
+
+document.getElementById('modXML')?.addEventListener('change', async (e) => {
+    await window.validateAndProcessFile(e.target, 'xml', {
+        onSuccess: (file, data) => {
+            tX2 = file;
+            checkDual('EDIT');
+        },
+        onError: () => {
+            tX2 = null;
+        }
+    });
+});
+
+document.getElementById('psychImage')?.addEventListener('change', async (e) => {
+    await window.validateAndProcessFile(e.target, 'png', {
+        onSuccess: (file, img) => {
+            tI3 = file;
+            checkDual('PSYCH');
+        },
+        onError: () => {
+            tI3 = null;
+        }
+    });
+});
+
+document.getElementById('psychXML')?.addEventListener('change', async (e) => {
+    await window.validateAndProcessFile(e.target, 'xml', {
+        onSuccess: (file, data) => {
+            tX3 = file;
+            checkDual('PSYCH');
+        },
+        onError: () => {
+            tX3 = null;
+        }
+    });
+});
 
 function checkDual(mode) {
     let imgF = mode === 'EDIT' ? tI2 : tI3; let xmlF = mode === 'EDIT' ? tX2 : tX3;
