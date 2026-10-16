@@ -280,20 +280,20 @@
 
                 <div id="fileInputsContainer" style="display:flex; flex-direction:column; gap:15px; margin-bottom: 20px;">
                     <input type="file" id="gifSueltasUpload" multiple class="hidden-file" accept="*/*" style="display:none;">
-                    <button class="btn-pildora" style="width:100%; padding: 25px; font-size: 1.2rem; background: #ff3366; color: #000; border:none; display:flex; align-items:center; justify-content:center; gap:15px; box-shadow: 0 4px 15px rgba(255, 51, 102, 0.4);" onclick="document.getElementById('gifSueltasUpload').click();">
-                        <img src="https://cdn-icons-png.flaticon.com/512/716/716784.png" class="icon icon-black" alt="Upload" style="width:40px; height:40px;"> 
-                        <div style="text-align:left;">
+                    <button class="btn-pildora" style="width:100%; padding: clamp(14px, 3.5vw, 22px); font-size: clamp(0.95rem, 2.5vw, 1.15rem); background: #ff3366; color: #000; border:none; display:flex; align-items:center; justify-content:center; gap:15px; box-shadow: 0 4px 15px rgba(255, 51, 102, 0.4); box-sizing:border-box;" onclick="document.getElementById('gifSueltasUpload').click();">
+                        <img src="https://cdn-icons-png.flaticon.com/512/716/716784.png" class="icon icon-black" alt="Upload" style="width:36px; height:36px; flex-shrink:0;"> 
+                        <div style="text-align:left; min-width:0;">
                             <b>CARGAR MÚLTIPLES IMÁGENES (.PNG, .JPG)</b><br>
-                            <span style="font-size:0.9rem; opacity:0.8;">Soporta navegación sin límite (Android)</span>
+                            <span style="font-size:0.85rem; opacity:0.85;">Soporta navegación sin límite (Android)</span>
                         </div>
                     </button>
                 </div>
 
                 <div id="gifWorkspace">
                     
-                    <div id="xmlAnimSelector" style="display:none; background:rgba(0,0,0,0.4); padding:15px; border-radius:8px;">
-                        <label style="color:#fff; font-weight:bold; margin-right:10px;">Seleccionar Animación del XML:</label>
-                        <select id="selectAnimacionXML" class="select-modern" style="min-width:200px;">
+                    <div id="xmlAnimSelector" style="display:none; background:rgba(0,0,0,0.4); padding:12px 14px; border-radius:10px; flex-direction:column; gap:8px;">
+                        <label style="color:#fff; font-weight:bold; font-size:0.9rem;">Seleccionar Animación del XML:</label>
+                        <select id="selectAnimacionXML" class="select-modern" style="width:100%; min-width:0; box-sizing:border-box;">
                             <option value="">Carga un XML primero...</option>
                         </select>
                     </div>
@@ -314,7 +314,7 @@
                         </div>
 
                         <!-- Fila BPM: Slider continuo + Steppers + Input Numérico Directo -->
-                        <div style="display:flex; align-items:center; gap:10px; width:100%; margin-top:2px; flex-wrap:wrap;">
+                        <div class="bpm-controls-row">
                             <span class="slider-label" style="min-width:55px;">Tempo:</span>
                             <button type="button" class="btn-step-bpm" onclick="ajustarBpmRelativo(-1)" title="Restar 1 BPM">-</button>
                             <input type="range" id="sliderBpm" min="40" max="300" step="1" value="100" oninput="onInputSliderBpm(this.value)" style="flex:1; min-width:140px;">
@@ -497,6 +497,10 @@
                 <span class="fab-color-dot" style="background: #31b0d1;"></span> Tema BF
             </button>
         </div>
+    </div>
+
+    <div class="overlay-modal" id="changelogModal" style="display: none;">
+        <div class="modal-box modal-box-changelog"></div>
     </div>
 
     <script src="js/history.js?v=2"></script>

@@ -281,9 +281,9 @@
                 <p style="color: #aaa; margin-bottom: 20px; font-size:0.9rem;">Sube tu hoja de sprites (.PNG) y tu archivo .XML asociado para extraer la animación.</p>
 
                 <div id="fileInputsContainer" style="display:flex; flex-direction:column; gap:15px; margin-bottom: 20px;">
-                    <div style="display:flex; gap:15px; flex-wrap:wrap;">
+                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
                         <input type="file" id="gifXmlUpload" class="hidden-file" accept="*/*" style="display:none;">
-                        <button class="btn-pildora" style="flex:1; padding: 20px; font-size: 1.1rem; background: #b57cff; color: #000; border:none; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow: 0 4px 15px rgba(181, 124, 255, 0.4);" onclick="document.getElementById('gifXmlUpload').click();">
+                        <button class="btn-pildora" style="flex:1 1 240px; padding: clamp(12px, 3vw, 18px); font-size: clamp(0.95rem, 2.5vw, 1.1rem); background: #b57cff; color: #000; border:none; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow: 0 4px 15px rgba(181, 124, 255, 0.4); box-sizing: border-box;" onclick="document.getElementById('gifXmlUpload').click();">
                             <img src="https://cdn-icons-png.flaticon.com/128/136/136443.png" class="icon icon-black" alt="Upload"> 
                             <div>
                                 <b>CARGAR ARCHIVO XML</b><br>
@@ -292,7 +292,7 @@
                         </button>
 
                         <input type="file" id="gifPngUpload" class="hidden-file" accept="*/*" style="display:none;">
-                        <button class="btn-pildora" style="flex:1; padding: 20px; font-size: 1.1rem; background: #ffaa00; color: #000; border:none; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow: 0 4px 15px rgba(255, 170, 0, 0.4);" onclick="document.getElementById('gifPngUpload').click();">
+                        <button class="btn-pildora" style="flex:1 1 240px; padding: clamp(12px, 3vw, 18px); font-size: clamp(0.95rem, 2.5vw, 1.1rem); background: #ffaa00; color: #000; border:none; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow: 0 4px 15px rgba(255, 170, 0, 0.4); box-sizing: border-box;" onclick="document.getElementById('gifPngUpload').click();">
                             <img src="https://cdn-icons-png.flaticon.com/512/716/716784.png" class="icon icon-black" alt="Upload"> 
                             <div>
                                 <b>CARGAR IMAGEN PNG</b><br>
@@ -304,9 +304,9 @@
 
                 <div id="gifWorkspace">
                     
-                    <div id="xmlAnimSelector" style="display:none; background:rgba(0,0,0,0.4); padding:15px; border-radius:8px;">
-                        <label style="color:#fff; font-weight:bold; margin-right:10px;">Seleccionar Animación del XML:</label>
-                        <select id="selectAnimacionXML" class="select-modern" style="min-width:200px;">
+                    <div id="xmlAnimSelector" style="display:none; background:rgba(0,0,0,0.4); padding:12px 14px; border-radius:10px; flex-direction:column; gap:8px;">
+                        <label style="color:#fff; font-weight:bold; font-size:0.9rem;">Seleccionar Animación del XML:</label>
+                        <select id="selectAnimacionXML" class="select-modern" style="width:100%; min-width:0; box-sizing:border-box;">
                             <option value="">Carga un XML primero...</option>
                         </select>
                     </div>
@@ -327,7 +327,7 @@
                         </div>
 
                         <!-- Fila BPM: Slider continuo + Steppers + Input Numérico Directo -->
-                        <div style="display:flex; align-items:center; gap:10px; width:100%; margin-top:2px; flex-wrap:wrap;">
+                        <div class="bpm-controls-row">
                             <span class="slider-label" style="min-width:55px;">Tempo:</span>
                             <button type="button" class="btn-step-bpm" onclick="ajustarBpmRelativo(-1)" title="Restar 1 BPM">-</button>
                             <input type="range" id="sliderBpm" min="40" max="300" step="1" value="100" oninput="onInputSliderBpm(this.value)" style="flex:1; min-width:140px;">
@@ -510,6 +510,10 @@
                 <span class="fab-color-dot" style="background: #31b0d1;"></span> Tema BF
             </button>
         </div>
+    </div>
+
+    <div class="overlay-modal" id="changelogModal" style="display: none;">
+        <div class="modal-box modal-box-changelog"></div>
     </div>
 
     <script src="js/history.js?v=2"></script>

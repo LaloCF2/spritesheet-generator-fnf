@@ -350,7 +350,7 @@
                             <canvas id="gifCropCanvas"></canvas>
                         </div>
 
-                        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; align-items:center;">
+                        <div class="gif-canvas-actions-bar">
                             <button class="btn-pildora btn-secundario" id="btnClearScanGif"
                                 style="border-color:#990033; color:#ff4d88;" onclick="limpiarCajasGif()"><img
                                     src="https://cdn-icons-png.flaticon.com/512/484/484611.png" class="icon"
@@ -363,7 +363,7 @@
                             </div>
 
                             <button class="btn-pildora btn-primario" id="btnExtraerFrames"
-                                style="flex:1; min-width:200px; background:#31b0d1; color:#000; border:none; font-weight:bold; padding:12px 20px; display:flex; align-items:center; justify-content:center; gap:8px;"
+                                style="flex:1; min-width:180px; background:#31b0d1; color:#000; border:none; font-weight:bold; padding:12px 20px; display:flex; align-items:center; justify-content:center; gap:8px;"
                                 onclick="extraerFramesGif()">
                                 <span>Continuar al Secuenciador</span>
                                 <img src="https://cdn-icons-png.flaticon.com/128/271/271228.png" style="width:16px;" alt="Next">
@@ -387,7 +387,7 @@
                         </div>
 
                         <!-- Fila BPM: Slider continuo + Steppers + Input Numérico Directo -->
-                        <div style="display:flex; align-items:center; gap:10px; width:100%; margin-top:2px; flex-wrap:wrap;">
+                        <div class="bpm-controls-row">
                             <span class="slider-label" style="min-width:55px;">Tempo:</span>
                             <button type="button" class="btn-step-bpm" onclick="ajustarBpmRelativo(-1)" title="Restar 1 BPM">-</button>
                             <input type="range" id="sliderBpm" min="40" max="300" step="1" value="100" oninput="onInputSliderBpm(this.value)" style="flex:1; min-width:140px;">
@@ -573,6 +573,10 @@
                 <span class="fab-color-dot" style="background: #31b0d1;"></span> Tema BF
             </button>
         </div>
+    </div>
+
+    <div class="overlay-modal" id="changelogModal" style="display: none;">
+        <div class="modal-box modal-box-changelog"></div>
     </div>
 
     <script src="js/history.js?v=2"></script>

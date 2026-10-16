@@ -171,12 +171,17 @@
             <!-- NUEVO: Selector de JSON integrado en la interfaz -->
             <div class="json-import-bar inner-glass-box"
                 style="display:flex; flex-wrap:wrap; gap:10px; padding:10px; margin-bottom: 20px; align-items:center; background: rgba(255,255,255,0.2);">
-                <label for="jsonUpdateUpload"
-                    style="color:var(--text); font-size:0.9rem; font-weight:bold; min-width: 180px; display:flex; align-items:center;">
+                <label style="color:var(--text); font-size:0.9rem; font-weight:bold; min-width: 180px; display:flex; align-items:center;">
                     <img src="https://cdn-icons-png.flaticon.com/128/136/136525.png" class="icon-sm" alt="JSON">
                     Importar .JSON (Opcional):
                 </label>
-                <input type="file" id="jsonUpdateUpload" accept=".json" class="inner-glass-box" style="flex:1;">
+                <input type="file" id="jsonUpdateUpload" class="hidden-file" accept=".json" style="display:none;">
+                <button class="btn-pildora btn-secundario" id="btnUploadJson"
+                    style="flex:1; border-color:#00e5ff; color:var(--text); padding: 10px 18px;"
+                    onclick="document.getElementById('jsonUpdateUpload').click();">
+                    <img src="https://cdn-icons-png.flaticon.com/128/136/136525.png" class="icon-sm" alt="JSON">
+                    <span id="txtUploadJson">Subir Archivo .JSON</span>
+                </button>
                 <div id="lblJsonUploaded"
                     style="width: 100%; font-size:0.85rem; color:var(--text); display:none; margin-top:5px; padding: 10px 14px; background: rgba(0, 229, 255, 0.08); border-radius: 8px; border: 1px solid rgba(0, 229, 255, 0.25);">
                     <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" class="icon-sm"> Listo
